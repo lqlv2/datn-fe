@@ -1,0 +1,27 @@
+{
+  "name": "ims-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^5.5.1",
+    "ant-design-vue": "^4.2.6",
+    "axios": "^1.7.7",
+    "bootstrap": "^5.3.3",
+    "jwt-decode": "^4.0.0",
+    "pinia": "^2.2.4",
+    "pinia-plugin-persistedstate": "^4.1.1",
+    "vue": "^3.5.10",
+    "vue-router": "^4.4.5",
+    "vue3-pdfjs": "^0.1.6"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.1.4",
+    "vite": "^5.4.8"
+  }
+}
