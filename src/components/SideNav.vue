@@ -25,7 +25,6 @@ import {
   TeamOutlined,
   DesktopOutlined,
   SettingOutlined,
-  AuditOutlined,
 } from "@ant-design/icons-vue";
 import { ref, computed } from "vue";
 import { useAuthStore } from "@/stores/authStore"; 
@@ -42,8 +41,7 @@ const menuItems = [
   { key: "4", label: "Project", route: "/project", icon: DesktopOutlined, roles: ["ADMIN", "DL", "INTERN", "MENTOR"] },
   { key: "5", label: "Document", route: "/document", icon: FolderOutlined, roles: ["ADMIN", "EDU"]},
   { key: "6", label: "Task", route: "/task", icon: ProfileOutlined, roles: ["ADMIN", "MENTOR", "INTERN"] },
-  { key: "7", label: "Evaluation", route: "/evaluation", icon: FundOutlined, roles: ["ADMIN", "EDU", "DL", "INTERN", "MENTOR"] },
-  { key: "8", label: "Recruit & Edu", route: "/recruit-edu", icon: AuditOutlined, roles: ["ADMIN", "EDU", "REC", "COO", "DL"] },
+  { key: "7", label: "Evaluation", route: "/evaluation", icon: FundOutlined, roles: ["ADMIN", "EDU", "DL", "INTERN", "MENTOR"] }
 ];
 
 // Filter menu items based on user role

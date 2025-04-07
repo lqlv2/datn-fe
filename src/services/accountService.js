@@ -1,6 +1,6 @@
 import axiosInstance from '@/plugins/axios';
 
-const API_ACCOUNT = '/accounts';
+const API_ACCOUNT = '/users';
 
 export const listAccount = (params) => {
   return axiosInstance.get(`${API_ACCOUNT}/list`, {
