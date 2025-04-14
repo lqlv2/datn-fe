@@ -22,10 +22,7 @@
           style="width: 100%"
           :dropdownStyle="{ maxHeight: '130px', overflowY: 'auto' }"
         >
-          <a-select-option value="ADMIN">ADMIN</a-select-option>
-          <a-select-option value="COO">COO</a-select-option>
-          <a-select-option value="DL">DL</a-select-option>
-          <a-select-option value="EDU">EDU</a-select-option>
+          <a-select-option value="ADMIN">Admin</a-select-option>
           <a-select-option value="MENTOR">Mentor</a-select-option>
           <a-select-option value="INTERN">Intern</a-select-option>
         </a-select>
