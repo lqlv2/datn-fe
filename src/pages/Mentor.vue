@@ -7,10 +7,8 @@
         background-color: saddlebrown;
         color: aliceblue;
       "
-              @click="showModal"
-    >Add Mentor
-    </a-button
-    >
+              @click="showModal">Add Mentor
+    </a-button>
 
 
     <a-modal
@@ -128,7 +126,43 @@
     </a-modal>
 
     <h2 class="header-title">Mentor Management</h2>
+    <a-row gutter="16" style="margin-bottom: 16px">
+      <a-col span="6">
+        <a-input
+            v-model:value="filters.name"
+            placeholder="Name"
+            allowClear
+            style="width: 100%"
+        />
+      </a-col>
 
+      <a-col span="4">
+        <a-select
+            v-model:value="filters.department"
+            placeholder="Department"
+            allowClear
+            style="width: 100%"
+        >
+          <a-select-option value="Pending">Pending</a-select-option>
+          <a-select-option value="On Progress">On Progress</a-select-option>
+        </a-select>
+      </a-col>
+
+      <a-col span="4">
+        <a-select
+            v-model:value="filters.position"
+            placeholder="Position"
+            allowClear
+            style="width: 100%"
+        >
+          <a-select-option value="Pending">Pending</a-select-option>
+          <a-select-option value="On Progress">On Progress</a-select-option>
+        </a-select>
+      </a-col>
+
+      <a-button type="primary" style="margin-left: 8px" @click="applyFilters">Search</a-button>
+
+    </a-row>
     <p></p>
     <a-table
         v-if="columns.length > 0 && mentors.length > 0"
@@ -156,26 +190,26 @@
         <a @click="showModalAssign(record)">Assign Intern</a>
       </template>
 
-      <template #expandedRowRender="{ record }">
-        <a-table
-            :columns="innerColumns"
-            :data-source="innerData(record)"
-            :pagination="false"
-        >
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.key === 'operation'">
-              <span class="table-operation">
-                <a @click="unassign(record.id)">Unassign</a>
-                <a style="margin-left: 20px">Contact</a>
-              </span>
-            </template>
-          </template>
-        </a-table>
-      </template>
+      <!--      <template #expandedRowRender="{ record }">-->
+      <!--        <a-table-->
+      <!--            :columns="innerColumns"-->
+      <!--            :data-source="innerData(record)"-->
+      <!--            :pagination="false"-->
+      <!--        >-->
+      <!--          <template #bodyCell="{ column, record }">-->
+      <!--            <template v-if="column.key === 'operation'">-->
+      <!--              <span class="table-operation">-->
+      <!--                <a @click="unassign(record.id)">Unassign</a>-->
+      <!--                <a style="margin-left: 20px">Contact</a>-->
+      <!--              </span>-->
+      <!--            </template>-->
+      <!--          </template>-->
+      <!--        </a-table>-->
+      <!--      </template>-->
 
-      <template #expandColumnTitle>
-        <span style="color: red">Interns</span>
-      </template>
+      <!--      <template #expandColumnTitle>-->
+      <!--        <span style="color: red">Interns</span>-->
+      <!--      </template>-->
     </a-table>
 
     <a-modal
@@ -295,6 +329,12 @@ const departments = ref([
   "PMO-QAJ",
 ]);
 
+const filters = ref({
+  name: null,
+  department: null,
+  position: null,
+});
+
 const open = ref(false);
 const openAssign = ref(false);
 
@@ -410,6 +450,10 @@ const handleToggle = async (mentorId) => {
   } catch (error) {
     console.error("Failed to toggle mentor status:", error);
   }
+};
+
+const applyFilters = async () => {
+    await list(currentPage.value, pagination.pageSize, filters.value);
 };
 
 

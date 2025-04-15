@@ -3,6 +3,7 @@ import axiosInstance from '@/plugins/axios';
 const API_MENTOR = '/mentors';
 
 export const listMentor = (params) => {
+  console.log(params)
   return axiosInstance.get(`${API_MENTOR}/list`, {
     params,
   });

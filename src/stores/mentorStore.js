@@ -22,11 +22,11 @@ export const useMentorStore = defineStore('mentorStore', {
 
   actions: {
     // Fetch and filter mentors
-    async list(page = 1, size = 10) {
+    async list(page = 1, size = 10, filter = {}) {
       try {
         // Prepare the parameters
-        const params = { page, size };
-
+        const params = { page, size, ...filter };
+        console.log(params)
         const response = await listMentor(params);
 
         this.mentors = response.data.data.data; // Assuming response structure matches
@@ -35,7 +35,6 @@ export const useMentorStore = defineStore('mentorStore', {
         this.openMentors = response.data.data.data.filter(
           (mentor) => mentor.open === true
         );
-        console.log(this.openMentors);
       } catch (error) {
         console.error('Failed to list mentors:', error);
       }
