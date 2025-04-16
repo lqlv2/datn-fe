@@ -281,11 +281,6 @@ const columns = [
     key: "phone",
   },
   {
-    title: "Department",
-    dataIndex: "department",
-    key: "department",
-  },
-  {
     title: "Position",
     dataIndex: "level",
     key: "level",

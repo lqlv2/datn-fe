@@ -6,7 +6,7 @@ import {
   updateIntern,
   addIntern,
   uploadIternImage,
-  getCurrentIntern
+  getCurrentIntern, filterInternsByMentor
 } from '@/services/internService';
 
 export const useInternStore = defineStore('internStore', {
@@ -15,7 +15,7 @@ export const useInternStore = defineStore('internStore', {
     totalElements: 1,
     currentPage: 1,
     filters: {
-      position: null,
+      name: null,
       status: null,
       startDate: null,
       endDate: null,
@@ -26,7 +26,7 @@ export const useInternStore = defineStore('internStore', {
 
   actions: {
     // Fetch and filter interns
-    async filterStoreInterns(page = 1, size = 10, filter = this.filters) {
+    async filterStoreInterns(page = 1, size = 10, filter = this.filters, isMentor = false) {
       try {
         // Prepare the parameters
         const params = {
@@ -35,11 +35,9 @@ export const useInternStore = defineStore('internStore', {
           size,
         };
 
-        const response = await filterInterns(params);
-
+        const response = await (isMentor ? filterInternsByMentor(params) : filterInterns(params));
         this.interns = response.data.data.data;
         this.currentPage = response.data.data.currentPage;
-        console.log(this.currentPage);
         this.totalElements = response.data.data.totalElements;
       } catch (error) {
         console.error('Failed to filter interns:', error);
@@ -50,7 +48,6 @@ export const useInternStore = defineStore('internStore', {
       try {
         const response = await getCurrentIntern();
         this.currentIntern = response.data.data;
-        console.log(this.currentIntern);
       } catch (error) {
         console.error('Failed to filter interns:', error);
       }

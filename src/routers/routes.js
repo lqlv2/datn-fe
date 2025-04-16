@@ -20,6 +20,7 @@ import TaskDetail from '@/pages/TaskDetail.vue';
 import TabPage from '@/pages/TabPage.vue';
 import Feedback from '@/components/Feedback.vue';
 import Evaluation from '@/components/Evaluation.vue';
+import Intern2 from "@/pages/mentor/Intern2.vue";
 
 const routes = [
   { path: PAGES.LOGIN, component: Login },
@@ -36,6 +37,11 @@ const routes = [
     path: '/account',
     name: 'Account',
     component: Account,
+  },
+  {
+    path: '/admin/intern',
+    name: 'Intern2',
+    component: Intern2,
   },
   {
     path: '/intern',

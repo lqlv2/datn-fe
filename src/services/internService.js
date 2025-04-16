@@ -8,6 +8,12 @@ export const filterInterns = (params) => {
   });
 };
 
+export const filterInternsByMentor = (params) => {
+  return axiosInstance.get(`/mentors/interns/list`, {
+    params,
+  });
+};
+
 export const exportExcel = (params) => {
   return axiosInstance.get(`${API_INTERN}/export`,  {
     params: params,
