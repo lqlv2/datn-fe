@@ -38,8 +38,8 @@ const menuItems = [
   { key: "1", label: "Account", route: "/account", icon: SettingOutlined, roles: ["ADMIN"] },
   { key: "2", label: "Intern", route: "/intern", icon: UserOutlined, roles: ["ADMIN", "REC", "MENTOR", "DL", "EDU"]},
   { key: "3", label: "Mentor", route: "/mentor", icon: TeamOutlined, roles: ["ADMIN", "DL", "EDU"] },
-  { key: "4", label: "Project", route: "/project", icon: DesktopOutlined, roles: ["ADMIN", "DL", "INTERN", "MENTOR"] },
-  { key: "5", label: "Document", route: "/document", icon: FolderOutlined, roles: ["ADMIN", "EDU"]},
+  // { key: "4", label: "Project", route: "/project", icon: DesktopOutlined, roles: ["ADMIN", "DL", "INTERN", "MENTOR"] },
+  // { key: "5", label: "Document", route: "/document", icon: FolderOutlined, roles: ["ADMIN", "EDU"]},
   { key: "6", label: "Task", route: "/task", icon: ProfileOutlined, roles: ["ADMIN", "MENTOR", "INTERN"] },
   { key: "7", label: "Evaluation", route: "/evaluation", icon: FundOutlined, roles: ["ADMIN", "EDU", "DL", "INTERN", "MENTOR"] }
 ];

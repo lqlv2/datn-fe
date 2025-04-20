@@ -1,9 +1,12 @@
 <script setup>
-import { ref, onMounted, computed } from "vue";
-import { useAuthStore } from "@/stores/authStore";
-import { useTaskStore } from "@/stores/taskStore";
-import { useProjectStore } from "@/stores/projectStore";
-import { useRouter } from "vue-router";
+import {ref, onMounted, computed} from "vue";
+import {useAuthStore} from "@/stores/authStore";
+import {useTaskStore} from "@/stores/taskStore";
+import {useProjectStore} from "@/stores/projectStore";
+import {useRouter} from "vue-router";
+import {QuillEditor} from "@vueup/vue-quill";
+
+const quillEditorRef = ref(null);
 
 const isModalOpen = ref(false);
 const isAddTaskModalOpen = ref(false);
@@ -37,8 +40,6 @@ const pagination = ref({
 const newTask = ref({
   title: "",
   description: "",
-  projectId: null,
-  internId: null,
   dueDate: null,
 });
 
@@ -57,7 +58,7 @@ const fetchTasks = (page = 1, size = 10, status = taskStore.status) => {
 
 const redirectToTaskDetail = (task) => {
   setSelectedTask(task);
-  router.push({ name: "TaskDetail", params: { id: task.id } });
+  router.push({name: "TaskDetail", params: {id: task.id}});
 };
 
 const showModal = async (record) => {
@@ -82,18 +83,19 @@ const handleOk = async () => {
 };
 
 const handleAddTask = async () => {
-  if (
-    !newTask.value.title ||
-    !newTask.value.projectId ||
-    !newTask.value.dueDate
-  ) {
-    return alert("Please fill all required fields!");
-  }
+
+  const quill = quillEditorRef.value?.getQuill();
+  newTask.value.description = quill.root.innerHTML;
+  // if (quill) {
+  //   newTask.value = quill.root.innerHTML;
+  // }
 
   await createTask(newTask.value);
+
+
   fetchTasks(currentPage.value, pagination.pageSize, taskStore.status);
 
-  await fetchInternsOfProject(newTask.value.projectId);
+  // await fetchInternsOfProject(newTask.value.projectId);
   isAddTaskModalOpen.value = false;
 
   isModalOpen.value = true;
@@ -105,6 +107,20 @@ const handlePaginationChange = (paginationConfig) => {
   pagination.pageSize = paginationConfig.pageSize;
   fetchTasks(paginationConfig.current, pagination.pageSize, taskStore.status);
 };
+const editorOptions = {
+  theme: 'snow',
+  modules: {
+    toolbar: [
+      ['bold', 'italic', 'underline', 'strike'],
+      ['blockquote', 'code-block'],
+      [{'header': 1}, {'header': 2}],
+      [{'list': 'ordered'}, {'list': 'bullet'}],
+      ['link', 'image'],
+      ['clean']
+    ]
+  },
+  placeholder: 'Enter task description...'
+};
 </script>
 
 <template>
@@ -112,25 +128,26 @@ const handlePaginationChange = (paginationConfig) => {
     <h2 style="margin-left: 10px">Task List</h2>
 
     <a-button
-      v-if="userRole === 'MENTOR'"
-      style="
+        v-if="userRole === 'MENTOR'"
+        style="
         float: right;
         margin-right: 8px;
         background-color: saddlebrown;
         color: aliceblue;
       "
-      @click="showAddTaskModal"
-      >Add Task</a-button
+        @click="showAddTaskModal"
+    >Add Task
+    </a-button
     >
 
     <div
-      style="margin-bottom: 16px; display: flex; gap: 10px; align-items: center"
+        style="margin-bottom: 16px; display: flex; gap: 10px; align-items: center"
     >
       <a-select
-        v-model:value="taskStore.status"
-        placeholder="Status"
-        style="width: 130px; margin-left: 10px"
-        @change="
+          v-model:value="taskStore.status"
+          placeholder="Status"
+          style="width: 130px; margin-left: 10px"
+          @change="
           fetchTasks(pagination.current, pagination.pageSize, taskStore.status)
         "
       >
@@ -142,97 +159,97 @@ const handlePaginationChange = (paginationConfig) => {
     </div>
 
     <a-table
-      :dataSource="allTasks || ownTasks"
-      :pagination="pagination"
-      @change="handlePaginationChange"
-      rowKey="id"
-      bordered
-      :scroll="{ x: 1500, y: 500 }"
+        :dataSource="allTasks || ownTasks"
+        :pagination="pagination"
+        @change="handlePaginationChange"
+        rowKey="id"
+        bordered
+        :scroll="{ x: 1500, y: 500 }"
     >
       <a-table-column
-        title="ID"
-        data-index="id"
-        key="id"
-        width="20"
-        fixed="left"
-        align="center"
+          title="ID"
+          data-index="id"
+          key="id"
+          width="20"
+          fixed="left"
+          align="center"
       />
 
       <a-table-column
-        title="Title"
-        data-index="title"
-        key="title"
-        width="130"
-        align="center"
+          title="Title"
+          data-index="title"
+          key="title"
+          width="130"
+          align="center"
       />
 
       <a-table-column
-        title="Assigned To"
-        data-index="assignedTo"
-        key="assignedTo"
-        width="150"
-        align="center"
+          title="Assigned To"
+          data-index="assignedTo"
+          key="assignedTo"
+          width="150"
+          align="center"
       />
 
       <a-table-column
-        title="Project"
-        data-index="projectName"
-        key="projectName"
-        width="150"
-        align="center"
+          title="Project"
+          data-index="projectName"
+          key="projectName"
+          width="150"
+          align="center"
       />
 
       <a-table-column
-        title="Status"
-        data-index="status"
-        key="status"
-        width="130"
-        align="center"
+          title="Status"
+          data-index="status"
+          key="status"
+          width="130"
+          align="center"
       />
 
       <a-table-column
-        title="Due Date"
-        data-index="dueDate"
-        key="dueDate"
-        width="150"
-        align="center"
+          title="Due Date"
+          data-index="dueDate"
+          key="dueDate"
+          width="150"
+          align="center"
       />
 
       <a-table-column
-        title="Assigned At"
-        data-index="assignedAt"
-        key="assignedAt"
-        width="150"
-        align="center"
+          title="Assigned At"
+          data-index="assignedAt"
+          key="assignedAt"
+          width="150"
+          align="center"
       />
 
       <a-table-column
-        title="Created At"
-        data-index="createdAt"
-        key="createdAt"
-        width="150"
-        align="center"
+          title="Created At"
+          data-index="createdAt"
+          key="createdAt"
+          width="150"
+          align="center"
       />
 
       <a-table-column title="Actions" align="center" fixed="right" :width="170">
         <template #default="{ record }">
           <a-button
-            @click="redirectToTaskDetail(record)"
-            type="text"
-            style="padding: 2px; min-width: auto; height: auto"
+              @click="redirectToTaskDetail(record)"
+              type="text"
+              style="padding: 2px; min-width: auto; height: auto"
           >
             <img
-              src="@/assets/open-in-browser.png"
-              alt="View"
-              style="width: 16px; height: 16px"
+                src="@/assets/open-in-browser.png"
+                alt="View"
+                style="width: 16px; height: 16px"
             />
           </a-button>
 
           <a-button
-            v-if="userRole === 'MENTOR'"
-            @click="editTask(record)"
-            type="text"
-            style="
+              v-if="userRole === 'MENTOR'"
+              @click="editTask(record)"
+              type="text"
+              style="
               padding: 2px;
               min-width: auto;
               height: auto;
@@ -240,17 +257,17 @@ const handlePaginationChange = (paginationConfig) => {
             "
           >
             <img
-              src="@/assets/edit.png"
-              alt="Edit"
-              style="width: 16px; height: 16px"
+                src="@/assets/edit.png"
+                alt="Edit"
+                style="width: 16px; height: 16px"
             />
           </a-button>
 
           <a-button
-            v-if="userRole === 'MENTOR'"
-            @click="showModal(record)"
-            type="text"
-            style="
+              v-if="userRole === 'MENTOR'"
+              @click="showModal(record)"
+              type="text"
+              style="
               padding: 2px;
               min-width: auto;
               height: auto;
@@ -258,17 +275,17 @@ const handlePaginationChange = (paginationConfig) => {
             "
           >
             <img
-              src="@/assets/user.png"
-              alt="Edit"
-              style="width: 16px; height: 16px"
+                src="@/assets/user.png"
+                alt="Edit"
+                style="width: 16px; height: 16px"
             />
           </a-button>
 
           <a-button
-            v-if="userRole === 'MENTOR'"
-            @click="deleteTask(record)"
-            type="text"
-            style="
+              v-if="userRole === 'MENTOR'"
+              @click="deleteTask(record)"
+              type="text"
+              style="
               padding: 2px;
               min-width: auto;
               height: auto;
@@ -276,25 +293,25 @@ const handlePaginationChange = (paginationConfig) => {
             "
           >
             <img
-              src="@/assets/delete.png"
-              alt="Delete"
-              style="width: 15px; height: 15px"
+                src="@/assets/delete.png"
+                alt="Delete"
+                style="width: 15px; height: 15px"
             />
           </a-button>
         </template>
       </a-table-column>
     </a-table>
 
-    <a-modal v-model:open="isModalOpen" title="Assign Tasks" @ok="handleOk">
+    <a-modal v-model:open="isModalOpen" title="Assign Tasks" @ok="handleOk" class="modal-1000px">
       <a-select
-        v-model:value="selectedIntern"
-        placeholder="Select Intern"
-        style="width: 100%"
+          v-model:value="selectedIntern"
+          placeholder="Select Intern"
+          style="width: 100%"
       >
         <a-select-option
-          v-for="intern in internsOfProject"
-          :key="intern.id"
-          :value="intern.id"
+            v-for="intern in internsOfProject"
+            :key="intern.id"
+            :value="intern.id"
         >
           {{ intern.fullname }} - {{ intern.position }} - {{ intern.phone }} -
           {{ intern.status }}
@@ -303,45 +320,31 @@ const handlePaginationChange = (paginationConfig) => {
     </a-modal>
 
     <a-modal
-      v-model:open="isAddTaskModalOpen"
-      title="Add New Task"
-      @ok="handleAddTask"
+        v-model:open="isAddTaskModalOpen"
+        title="Add New Task"
+        @ok="handleAddTask"
+        width="60vw"
     >
       <a-form layout="vertical">
         <a-form-item label="Title" required>
           <a-input
-            v-model:value="newTask.title"
-            placeholder="Enter task title"
+              v-model:value="newTask.title"
+              placeholder="Enter task title"
           />
         </a-form-item>
-
-        <a-form-item label="Description">
-          <a-textarea
-            v-model:value="newTask.description"
-            placeholder="Enter task description"
-          />
-        </a-form-item>
-
-        <a-form-item label="Project" required>
-          <a-select
-            v-model:value="newTask.projectId"
-            placeholder="Select project"
-          >
-            <a-select-option
-              v-for="project in projectStore.projects"
-              :key="project.id"
-              :value="project.id"
-            >
-              {{ project.id }} - {{ project.name }} - {{ project.type }}
-            </a-select-option>
-          </a-select>
-        </a-form-item>
+        <div style="height: 280px">
+          <a-form-item label="Description" required>
+            <div style="height: 200px">
+              <QuillEditor v-model:content="newTask.description" :options="editorOptions" ref="quillEditorRef"/>
+            </div>
+          </a-form-item>
+        </div>
 
         <a-form-item label="Due Date" required>
           <a-date-picker
-            v-model:value="newTask.dueDate"
-            placeholder="Select due date"
-            style="width: 100%"
+              v-model:value="newTask.dueDate"
+              placeholder="Select due date"
+              style="width: 100%"
           />
         </a-form-item>
       </a-form>
@@ -352,5 +355,9 @@ const handlePaginationChange = (paginationConfig) => {
 <style scoped>
 h2 {
   margin-bottom: 16px;
+}
+
+.modal-1000px {
+  width: 1000px !important;
 }
 </style>

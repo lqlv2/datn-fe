@@ -17,6 +17,7 @@ export const assignTaskForIntern = (taskId, internId) => {
 };
 
 export const createTask = (taskRequest) => {
+    console.log('taskRequest', taskRequest)
   return axiosInstance.post(`${API_TASK}/create`, taskRequest);
 };
 
