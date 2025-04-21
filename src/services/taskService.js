@@ -1,6 +1,7 @@
 import axiosInstance from '@/plugins/axios';
 
 const API_TASK = '/tasks';
+const API_MENTOR = '/mentors';
 
 export const listOwnTasks = (params) => {
   return axiosInstance.get(`${API_TASK}/list-own`, { params });
@@ -17,8 +18,11 @@ export const assignTaskForIntern = (taskId, internId) => {
 };
 
 export const createTask = (taskRequest) => {
-    console.log('taskRequest', taskRequest)
   return axiosInstance.post(`${API_TASK}/create`, taskRequest);
+};
+
+export const updateTask = (taskRequest) => {
+  return axiosInstance.put(`${API_TASK}?taskId=${taskRequest.id}`, taskRequest);
 };
 
 export const updateTaskProgress = (updateStatusRequest) => {
@@ -30,7 +34,7 @@ export const addCommentToTask = (commentRequest) => {
 };
 
 export const listInternOfProject = (params) => {
-  return axiosInstance.get(`${API_TASK}/list-intern-of-project`, {
+  return axiosInstance.get(`${API_MENTOR}/interns/listByTask`, {
     params,
   });
 };

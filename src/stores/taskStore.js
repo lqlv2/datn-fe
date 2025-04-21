@@ -6,7 +6,7 @@ import {
   createTask,
   updateTaskProgress,
   addCommentToTask,
-  listInternOfProject,
+  listInternOfProject, updateTask,
 } from '@/services/taskService';
 
 export const useTaskStore = defineStore('task', {
@@ -20,17 +20,6 @@ export const useTaskStore = defineStore('task', {
     internsOfProject: [],
   }),
   actions: {
-    async fetchOwnTasks(page = 1, size = 10, status = this.status) {
-      try {
-        const params = { page, size, status };
-        const response = await listOwnTasks(params);
-        this.ownTasks = response.data.data.data;
-        this.currentPage = response.data.data.currentPage;
-        this.totalElements = response.data.data.totalElements;
-      } catch (error) {
-        console.error('Error fetching own tasks:', error);
-      }
-    },
 
     async fetchAllTasks(page = 1, size = 10, status = this.status) {
       try {
@@ -61,6 +50,14 @@ export const useTaskStore = defineStore('task', {
       }
     },
 
+    async updateTask(taskRequest) {
+      try {
+        const response = await updateTask(taskRequest);
+      } catch (error) {
+        console.error('Error creating task:', error);
+      }
+    },
+
     async updateTaskStatus(updateStatusRequest) {
       try {
         await updateTaskProgress(updateStatusRequest);
@@ -77,9 +74,9 @@ export const useTaskStore = defineStore('task', {
       }
     },
 
-    async fetchInternsOfProject(projectId) {
+    async fetchInternsOfProject(id) {
       try {
-        const params = { projectId };
+        const params = { taskId: id };
         const response = await listInternOfProject(params);
         this.internsOfProject = response.data.data;
       } catch (error) {

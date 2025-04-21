@@ -7,9 +7,11 @@ import {useRouter} from "vue-router";
 import {QuillEditor} from "@vueup/vue-quill";
 
 const quillEditorRef = ref(null);
+const quillEditTaskRef = ref(null);
 
 const isModalOpen = ref(false);
 const isAddTaskModalOpen = ref(false);
+const isTaskDetailModalOpen = ref(false);
 const router = useRouter();
 const selectedInternAddForm = ref(null);
 const selectedIntern = ref(null);
@@ -27,6 +29,7 @@ const {
   clearSelectedTask,
   fetchInternsOfProject,
   createTask,
+  updateTask,
 } = taskStore;
 const selectedTask = computed(() => taskStore.selectedTask);
 
@@ -41,6 +44,13 @@ const newTask = ref({
   title: "",
   description: "",
   dueDate: null,
+});
+
+const taskDetail = ref({
+  id: null,
+  title: "",
+  description: "",
+  dueDate: '',
 });
 
 const showAddTaskModal = () => {
@@ -62,17 +72,13 @@ const redirectToTaskDetail = (task) => {
 };
 
 const showModal = async (record) => {
-  console.log(record);
-
-  if (record.assignedTo) {
-    alert("This task already has an intern assigned.");
-    return;
-  }
-
   setSelectedTask(record);
-  await fetchInternsOfProject(record.projectId);
+  await fetchInternsOfProject(record.id);
   isModalOpen.value = true;
 };
+
+
+
 const handleOk = async () => {
 
   await taskStore.assignTask(selectedTask.value.id, selectedIntern.value);
@@ -83,21 +89,9 @@ const handleOk = async () => {
 };
 
 const handleAddTask = async () => {
-
-  const quill = quillEditorRef.value?.getQuill();
-  newTask.value.description = quill.root.innerHTML;
-  // if (quill) {
-  //   newTask.value = quill.root.innerHTML;
-  // }
-
   await createTask(newTask.value);
-
-
   fetchTasks(currentPage.value, pagination.pageSize, taskStore.status);
-
-  // await fetchInternsOfProject(newTask.value.projectId);
   isAddTaskModalOpen.value = false;
-
   isModalOpen.value = true;
 };
 
@@ -121,6 +115,20 @@ const editorOptions = {
   },
   placeholder: 'Enter task description...'
 };
+const editTask = (record) => {
+  taskDetail.value = {
+    id: record.id,
+    title: record.title,
+    description: record.description,
+    dueDate: record.dueDate,
+  };
+  isTaskDetailModalOpen.value = true;
+}
+const updateTaskInfo = async (id) => {
+  await updateTask({id: id, ...taskDetail.value});
+  fetchTasks(currentPage.value, pagination.pageSize, taskStore.status);
+  isTaskDetailModalOpen.value = false;
+}
 </script>
 
 <template>
@@ -159,7 +167,7 @@ const editorOptions = {
     </div>
 
     <a-table
-        :dataSource="allTasks || ownTasks"
+        :dataSource="allTasks"
         :pagination="pagination"
         @change="handlePaginationChange"
         rowKey="id"
@@ -184,22 +192,6 @@ const editorOptions = {
       />
 
       <a-table-column
-          title="Assigned To"
-          data-index="assignedTo"
-          key="assignedTo"
-          width="150"
-          align="center"
-      />
-
-      <a-table-column
-          title="Project"
-          data-index="projectName"
-          key="projectName"
-          width="150"
-          align="center"
-      />
-
-      <a-table-column
           title="Status"
           data-index="status"
           key="status"
@@ -214,15 +206,6 @@ const editorOptions = {
           width="150"
           align="center"
       />
-
-      <a-table-column
-          title="Assigned At"
-          data-index="assignedAt"
-          key="assignedAt"
-          width="150"
-          align="center"
-      />
-
       <a-table-column
           title="Created At"
           data-index="createdAt"
@@ -231,22 +214,9 @@ const editorOptions = {
           align="center"
       />
 
-      <a-table-column title="Actions" align="center" fixed="right" :width="170">
+      <a-table-column title="Actions" align="center" fixed="right" :width="200">
         <template #default="{ record }">
           <a-button
-              @click="redirectToTaskDetail(record)"
-              type="text"
-              style="padding: 2px; min-width: auto; height: auto"
-          >
-            <img
-                src="@/assets/open-in-browser.png"
-                alt="View"
-                style="width: 16px; height: 16px"
-            />
-          </a-button>
-
-          <a-button
-              v-if="userRole === 'MENTOR'"
               @click="editTask(record)"
               type="text"
               style="
@@ -256,15 +226,10 @@ const editorOptions = {
               margin-left: 7px;
             "
           >
-            <img
-                src="@/assets/edit.png"
-                alt="Edit"
-                style="width: 16px; height: 16px"
-            />
+            Edit
           </a-button>
 
           <a-button
-              v-if="userRole === 'MENTOR'"
               @click="showModal(record)"
               type="text"
               style="
@@ -274,15 +239,10 @@ const editorOptions = {
               margin-left: 7px;
             "
           >
-            <img
-                src="@/assets/user.png"
-                alt="Edit"
-                style="width: 16px; height: 16px"
-            />
+            Assign
           </a-button>
 
           <a-button
-              v-if="userRole === 'MENTOR'"
               @click="deleteTask(record)"
               type="text"
               style="
@@ -292,11 +252,7 @@ const editorOptions = {
               margin-left: 7px;
             "
           >
-            <img
-                src="@/assets/delete.png"
-                alt="Delete"
-                style="width: 15px; height: 15px"
-            />
+            Delete
           </a-button>
         </template>
       </a-table-column>
@@ -335,7 +291,8 @@ const editorOptions = {
         <div style="height: 280px">
           <a-form-item label="Description" required>
             <div style="height: 200px">
-              <QuillEditor v-model:content="newTask.description" :options="editorOptions" ref="quillEditorRef"/>
+              <QuillEditor v-model:content="newTask.description" content-type="html" :options="editorOptions"
+                           ref="quillEditTaskRef"/>
             </div>
           </a-form-item>
         </div>
@@ -348,6 +305,45 @@ const editorOptions = {
           />
         </a-form-item>
       </a-form>
+    </a-modal>
+
+    <a-modal
+        v-model:open="isTaskDetailModalOpen"
+        title="Task detail"
+        @ok="handleAddTask"
+        width="60vw"
+    >
+      <a-form layout="vertical">
+        <a-form-item label="Title" required>
+          <a-input
+              v-model:value="taskDetail.title"
+              placeholder="Enter task title"
+          />
+        </a-form-item>
+        <div style="height: 280px">
+          <a-form-item label="Description" required>
+            <div style="height: 200px">
+              <QuillEditor v-model:content="taskDetail.description" content-type="html" :options="editorOptions"
+                           ref="quillEditorRef"/>
+            </div>
+          </a-form-item>
+        </div>
+
+        <a-form-item label="Due Date" required>
+          <a-date-picker
+              v-model:value="taskDetail.dueDate"
+              placeholder="Select due date"
+              format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD"
+              :disabledDate="(current) => current && current < new Date().setHours(0,0,0,0)"
+              style="width: 100%"
+          />
+        </a-form-item>
+      </a-form>
+      <template #footer>
+        <a-button key="back" @click="isTaskDetailModalOpen = false">Cancel</a-button>
+        <a-button key="submit" type="primary" @click="updateTaskInfo(taskDetail.id)">Update</a-button>
+      </template>
     </a-modal>
   </div>
 </template>
