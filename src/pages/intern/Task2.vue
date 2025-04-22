@@ -59,11 +59,7 @@ const showAddTaskModal = () => {
 };
 
 const fetchTasks = (page = 1, size = 10, status = taskStore.status) => {
-  if (userRole.value === "INTERN") {
-    fetchOwnTasks(page, size, status);
-  } else {
-    fetchAllTasks(page, size, status);
-  }
+  fetchOwnTasks(page, size, status);
 };
 
 const redirectToTaskDetail = (task) => {
@@ -76,7 +72,6 @@ const showModal = async (record) => {
   await fetchInternsOfProject(record.id);
   isModalOpen.value = true;
 };
-
 
 
 const handleAssignTask = async () => {
@@ -95,7 +90,9 @@ const handleAddTask = async () => {
   isModalOpen.value = true;
 };
 
-onMounted(fetchTasks);
+onMounted(() => {
+  fetchTasks()
+});
 
 const handlePaginationChange = (paginationConfig) => {
   pagination.pageSize = paginationConfig.pageSize;
@@ -103,6 +100,7 @@ const handlePaginationChange = (paginationConfig) => {
 };
 const editorOptions = {
   theme: 'snow',
+  readOnly: true,
   modules: {
     toolbar: [
       ['bold', 'italic', 'underline', 'strike'],
@@ -113,7 +111,6 @@ const editorOptions = {
       ['clean']
     ]
   },
-  placeholder: 'Enter task description...'
 };
 const editTask = (record) => {
   taskDetail.value = {
@@ -134,20 +131,6 @@ const updateTaskInfo = async (id) => {
 <template>
   <div>
     <h2 style="margin-left: 10px">Task List</h2>
-
-    <a-button
-        v-if="userRole === 'MENTOR'"
-        style="
-        float: right;
-        margin-right: 8px;
-        background-color: saddlebrown;
-        color: aliceblue;
-      "
-        @click="showAddTaskModal"
-    >Add Task
-    </a-button
-    >
-
     <div
         style="margin-bottom: 16px; display: flex; gap: 10px; align-items: center"
     >
@@ -226,86 +209,11 @@ const updateTaskInfo = async (id) => {
               margin-left: 7px;
             "
           >
-            Edit
-          </a-button>
-
-          <a-button
-              @click="showModal(record)"
-              type="text"
-              style="
-              padding: 2px;
-              min-width: auto;
-              height: auto;
-              margin-left: 7px;
-            "
-          >
-            Assign
-          </a-button>
-
-          <a-button
-              @click="deleteTask(record)"
-              type="text"
-              style="
-              padding: 2px;
-              min-width: auto;
-              height: auto;
-              margin-left: 7px;
-            "
-          >
-            Delete
+            View
           </a-button>
         </template>
       </a-table-column>
     </a-table>
-
-    <a-modal v-model:open="isModalOpen" title="Assign Tasks" @ok="handleAssignTask" class="modal-1000px">
-      <a-select
-          v-model:value="selectedIntern"
-          placeholder="Select Intern"
-          style="width: 100%"
-          mode="multiple"
-      >
-        <a-select-option
-            v-for="intern in internsOfProject"
-            :key="intern.id"
-            :value="intern.id"
-        >
-          {{ intern.fullname }}
-        </a-select-option>
-      </a-select>
-    </a-modal>
-
-    <a-modal
-        v-model:open="isAddTaskModalOpen"
-        title="Add New Task"
-        @ok="handleAddTask"
-        width="60vw"
-    >
-      <a-form layout="vertical">
-        <a-form-item label="Title" required>
-          <a-input
-              v-model:value="newTask.title"
-              placeholder="Enter task title"
-          />
-        </a-form-item>
-        <div style="height: 280px">
-          <a-form-item label="Description" required>
-            <div style="height: 200px">
-              <QuillEditor v-model:content="newTask.description" content-type="html" :options="editorOptions"
-                           ref="quillEditTaskRef"/>
-            </div>
-          </a-form-item>
-        </div>
-
-        <a-form-item label="Due Date" required>
-          <a-date-picker
-              v-model:value="newTask.dueDate"
-              placeholder="Select due date"
-              style="width: 100%"
-          />
-        </a-form-item>
-      </a-form>
-    </a-modal>
 
     <a-modal
         v-model:open="isTaskDetailModalOpen"
@@ -318,12 +226,14 @@ const updateTaskInfo = async (id) => {
           <a-input
               v-model:value="taskDetail.title"
               placeholder="Enter task title"
+              :disabled="true"
+
           />
         </a-form-item>
         <div style="height: 280px">
           <a-form-item label="Description" required>
             <div style="height: 200px">
-              <QuillEditor v-model:content="taskDetail.description" content-type="html" :options="editorOptions"
+              <QuillEditor v-model:content="taskDetail.description" content-type="html" :options="editorOptions" readonly
                            ref="quillEditorRef"/>
             </div>
           </a-form-item>
@@ -331,6 +241,7 @@ const updateTaskInfo = async (id) => {
 
         <a-form-item label="Due Date" required>
           <a-date-picker
+              :disabled="true"
               v-model:value="taskDetail.dueDate"
               placeholder="Select due date"
               format="YYYY-MM-DD"
@@ -338,6 +249,9 @@ const updateTaskInfo = async (id) => {
               :disabledDate="(current) => current && current < new Date().setHours(0,0,0,0)"
               style="width: 100%"
           />
+        </a-form-item>
+        <a-form-item label="Progress">
+          <a-slider/>
         </a-form-item>
       </a-form>
       <template #footer>

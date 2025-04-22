@@ -21,6 +21,7 @@ import TabPage from '@/pages/TabPage.vue';
 import Feedback from '@/components/Feedback.vue';
 import Evaluation from '@/components/Evaluation.vue';
 import Intern2 from "@/pages/mentor/Intern2.vue";
+import Task2 from "@/pages/intern/Task2.vue";
 
 const routes = [
   { path: PAGES.LOGIN, component: Login },
@@ -42,6 +43,11 @@ const routes = [
     path: '/admin/intern',
     name: 'Intern2',
     component: Intern2,
+  },
+  {
+    path: '/intern/task',
+    name: 'Task2',
+    component: Task2,
   },
   {
     path: '/intern',

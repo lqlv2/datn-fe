@@ -33,6 +33,18 @@ export const useTaskStore = defineStore('task', {
       }
     },
 
+    async fetchOwnTasks(page = 1, size = 10, status = this.status) {
+      try {
+        const params = { page, size, status };
+        const response = await listOwnTasks(params);
+        this.allTasks = response.data.data.data;
+        this.currentPage = response.data.data.currentPage;
+        this.totalElements = response.data.data.totalElements;
+      } catch (error) {
+        console.error('Error fetching all tasks:', error);
+      }
+    },
+
     async assignTask(taskId, internId) {
       try {
         await assignTaskForIntern(taskId, internId);

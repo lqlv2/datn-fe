@@ -4,17 +4,19 @@ const API_TASK = '/tasks';
 const API_MENTOR = '/mentors';
 
 export const listOwnTasks = (params) => {
-  return axiosInstance.get(`${API_TASK}/list-own`, { params });
+  return axiosInstance.get(`${API_TASK}/intern`, { params });
 };
 
 export const listAllTasks = (params) => {
   return axiosInstance.get(`${API_TASK}`, { params });
 };
 
-export const assignTaskForIntern = (taskId, internId) => {
-  return axiosInstance.post(`${API_TASK}/assign`, null, {
-    params: { taskId, internId },
-  });
+export const assignTaskForIntern = (taskId, internIds) => {
+  console.log(internIds)
+  const params = new URLSearchParams();
+  params.append('taskId', taskId);
+  internIds.filter(id => id !== null && id !== undefined).forEach(id => params.append('internId', id));
+  return axiosInstance.post(`${API_TASK}/assign?${params.toString()}`);
 };
 
 export const createTask = (taskRequest) => {
