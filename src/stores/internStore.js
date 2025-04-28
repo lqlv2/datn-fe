@@ -80,8 +80,7 @@ export const useInternStore = defineStore('internStore', {
     async delete(id) {
       try {
         await deleteIntern(id);
-        this.interns = this.interns.filter((intern) => intern.id !== id); // Remove intern from state
-        console.log(`Deleted intern with ID ${id}.`);
+        await this.filterStoreInterns(this.currentPage); // Refresh the list after deletion
       } catch (error) {
         console.error('Failed to delete intern:', error);
       }

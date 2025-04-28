@@ -40,7 +40,7 @@ const routes = [
     component: Account,
   },
   {
-    path: '/admin/intern',
+    path: '/mentor/intern',
     name: 'Intern2',
     component: Intern2,
   },

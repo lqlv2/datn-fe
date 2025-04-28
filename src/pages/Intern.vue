@@ -2,15 +2,10 @@
   <div>
     <h2 class="header-title">Intern Management</h2>
 
-    <a-row gutter="16" style="margin-bottom: 16px">
+    <a-row :gutter="16" style="margin-bottom: 16px">
       <!-- Position Filter -->
       <a-col span="6">
-        <a-select
-            v-model:value="filters.position"
-            placeholder="Position"
-            allowClear
-            style="width: 100%"
-        >
+        <a-select v-model:value="filters.position" placeholder="Position" allowClear style="width: 100%">
           <a-select-option value="BACKEND_DEVELOPER">Backend Developer</a-select-option>
           <a-select-option value="FRONTEND_DEVELOPER">ReactJS Developer</a-select-option>
           <a-select-option value="DEVOPS_ENGINEER">DevOps</a-select-option>
@@ -20,13 +15,8 @@
 
       <!-- Status Filter -->
       <a-col span="6">
-        <a-select
-            v-model:value="filters.status"
-            placeholder="Status"
-            allowClear
-            style="width: 100%"
-            :dropdownStyle="{ maxHeight: '130px', overflowY: 'auto' }"
-        >
+        <a-select v-model:value="filters.status" placeholder="Status" allowClear style="width: 100%"
+                  :dropdownStyle="{ maxHeight: '130px', overflowY: 'auto' }">
           <a-select-option value="ONBOARD">Onboard</a-select-option>
           <a-select-option value="FINISH_ONBOARD">Onboard Finished</a-select-option>
           <a-select-option value="OJT">OJT</a-select-option>
@@ -38,157 +28,91 @@
 
       <!-- Start Date Filter -->
       <a-col span="6">
-        <a-date-picker
-            v-model:value="filters.startDate"
-            placeholder="Start Date"
-            style="width: 100%"
-        />
+        <a-date-picker v-model:value="filters.startDate" placeholder="Start Date" style="width: 100%"/>
       </a-col>
 
       <!-- End Date Filter -->
       <a-col span="6">
-        <a-date-picker
-            v-model:value="filters.endDate"
-            placeholder="End Date"
-            style="width: 100%"
-        />
+        <a-date-picker v-model:value="filters.endDate" placeholder="End Date" style="width: 100%"/>
       </a-col>
     </a-row>
 
     <!-- Apply Filters Button -->
-    <a-button type="primary" style="margin-left: 8px" @click="applyFilters"
-    >Search
-    </a-button
-    >
+    <a-button type="primary" style="margin-left: 8px" @click="applyFilters">Search
+    </a-button>
     <a-button style="margin-left: 8px" @click="resetFilters">Reset</a-button>
-    <a-button
-        style="
+    <a-button style="
         float: right;
         margin-right: 8px;
         background-color: saddlebrown;
         color: aliceblue;
-      "
-        @click="showModal"
-    >Add Intern
-    </a-button
-    >
+      " @click="showModal">Add Intern
+    </a-button>
 
-    <a-modal
-        v-model:open="open"
-        title="Add New Intern"
-        @ok="handleSubmit"
-        @cancel="closeModal"
-    >
+    <a-modal v-model:open="open" title="Add New Intern" @ok="handleSubmit" @cancel="closeModal">
       <template #footer>
         <a-button key="back" @click="closeModal">Cancel</a-button>
-        <a-button key="submit" type="primary" @click="handleSubmit"
-        >Submit
-        </a-button
-        >
+        <a-button key="submit" type="primary" @click="handleSubmit">Submit</a-button>
       </template>
       <a-form layout="vertical" ref="addInternForm" :model="form">
         <!-- Full Name and Email -->
-        <a-row gutter="{16}">
+        <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item
-                style="width: 90%"
-                label="Full Name"
-                name="fullname"
-                :rules="[{ required: true, message: 'Please input name' }]"
-            >
-              <a-input
-                  v-model:value="form.fullname"
-                  placeholder="Enter full name"
-              />
+            <a-form-item style="width: 90%" label="Full Name" name="fullname"
+                         :rules="[{ required: true, message: 'Please input name' }]">
+              <a-input v-model:value="form.fullname" placeholder="Enter full name"/>
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item
-                style="width: 90%"
-                label="Email"
-                name="email"
-                :rules="[{ required: true, message: 'Please input email' }]"
-            >
+            <a-form-item style="width: 90%" label="Email" name="email"
+                         :rules="[{ required: true, message: 'Please input email' }]">
               <a-input v-model:value="form.email" placeholder="Enter email"/>
             </a-form-item>
           </a-col>
         </a-row>
 
         <!-- Phone and Date of Birth -->
-        <a-row gutter="{16}">
+        <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item
-                style="width: 90%"
-                label="Phone"
-                name="phone"
-                :rules="[{ required: true, message: 'Please input phone' }]"
-            >
-              <a-input
-                  v-model:value="form.phone"
-                  placeholder="Enter phone number"
-              />
+            <a-form-item style="width: 90%" label="Phone" name="phone"
+                         :rules="[{ required: true, message: 'Please input phone' }]">
+              <a-input v-model:value="form.phone" placeholder="Enter phone number"/>
             </a-form-item>
           </a-col>
           <a-col :span="12">
             <a-form-item label="Date of Birth" name="dob">
-              <a-date-picker
-                  v-model:value="form.dob"
-                  style="width: 100%"
-                  placeholder="Select date of birth"
-              />
+              <a-date-picker v-model:value="form.dob" style="width: 100%" placeholder="Select date of birth"/>
             </a-form-item>
           </a-col>
         </a-row>
 
         <!-- Start Date and End Date -->
-        <a-row gutter="{16}">
+        <a-row :gutter="16">
           <a-col :span="12">
             <a-form-item style="width: 90%" label="Start Date" name="startDate">
-              <a-date-picker
-                  v-model:value="form.startDate"
-                  style="width: 100%"
-                  placeholder="Select start date"
-              />
+              <a-date-picker v-model:value="form.startDate" style="width: 100%" placeholder="Select start date"/>
             </a-form-item>
           </a-col>
           <a-col :span="12">
             <a-form-item label="End Date" name="endDate">
-              <a-date-picker
-                  v-model:value="form.endDate"
-                  style="width: 100%"
-                  placeholder="Select end date"
-              />
+              <a-date-picker v-model:value="form.endDate" style="width: 100%" placeholder="Select end date"/>
             </a-form-item>
           </a-col>
         </a-row>
 
         <!-- Position and Image -->
-        <a-row gutter="{16}">
+        <a-row :gutter="16">
           <a-col :span="12">
             <a-form-item style="width: 90%" label="Position" name="position">
-              <a-select
-                  v-model:value="form.position"
-                  placeholder="Select position"
-              >
-                <a-select-option
-                    v-for="[key, value] in Object.entries(positions)"
-                    :key="key"
-                    :value="key"
-                >
+              <a-select v-model:value="form.position" placeholder="Select position">
+                <a-select-option v-for="[key, value] in Object.entries(positions)" :key="key" :value="key">
                   {{ value }}
                 </a-select-option>
               </a-select>
             </a-form-item>
             <a-form-item style="width: 90%" label="Mentor" name="mentor">
-              <a-select
-                  v-model:value="form.position"
-                  placeholder="Select position"
-              >
-                <a-select-option
-                    v-for="pos in positions"
-                    :key="pos"
-                    :value="pos"
-                >
+              <a-select v-model:value="form.position" placeholder="Select position">
+                <a-select-option v-for="pos in positions" :key="pos" :value="pos">
                   {{ pos }}
                 </a-select-option>
               </a-select>
@@ -196,13 +120,8 @@
           </a-col>
           <a-col :span="12">
             <a-form-item label="Image" name="image">
-              <a-upload
-                  name="file"
-                  list-type="picture-card"
-                  :maxCount="1"
-                  :onPreview="handlePreview"
-                  :customRequest="handleUpload"
-              >
+              <a-upload name="file" list-type="picture-card" :maxCount="1" :onPreview="handlePreview"
+                        :customRequest="handleUpload">
                 <div>
                   <plus-outlined/>
                   <div style="margin-top: 8px">Upload</div>
@@ -213,14 +132,84 @@
         </a-row>
       </a-form>
     </a-modal>
+    <a-modal title="Update Intern" v-model:open="isOpenUpdate" @cancel="isOpenUpdate = false">
+      <template #footer>
+        <a-button key="back" @click="isOpenUpdate = false">Cancel</a-button>
+        <a-button key="submit" type="primary" @click="handleUpdateSubmit">Update</a-button>
+      </template>
+      <a-form layout="vertical" ref="updateInternForm" :model="updateform">
+        <!-- Full Name and Email -->
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item style="width: 90%" label="Full Name" name="fullname"
+                         :rules="[{ required: true, message: 'Please input name' }]">
+              <a-input v-model:value="updateform.fullname" placeholder="Enter full name"/>
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item style="width: 90%" label="Email" name="email"
+                         :rules="[{ required: true, message: 'Please input email' }]">
+              <a-input v-model:value="updateform.email" placeholder="Enter email"/>
+            </a-form-item>
+          </a-col>
+        </a-row>
 
-    <a-tooltip
-        title="Application will export by selecting filters, not the current list"
-    >
-      <a-button
-          style="float: right; background-color: green; color: aliceblue"
-          @click="exportFile"
-      >
+        <!-- Phone and Date of Birth -->
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item style="width: 90%" label="Phone" name="phone"
+                         :rules="[{ required: true, message: 'Please input phone' }]">
+              <a-input v-model:value="updateform.phone" placeholder="Enter phone number"/>
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="Date of Birth" name="dob">
+              <a-date-picker v-model:value="form.dob" style="width: 100%" placeholder="Select date of birth"/>
+            </a-form-item>
+          </a-col>
+        </a-row>
+
+        <!-- Start Date and End Date -->
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item style="width: 90%" label="Start Date" name="startDate">
+              <a-date-picker v-model:value="updateform.startDate" style="width: 100%" placeholder="Select start date"/>
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="End Date" name="endDate">
+              <a-date-picker v-model:value="updateform.endDate" style="width: 100%" placeholder="Select end date"/>
+            </a-form-item>
+          </a-col>
+        </a-row>
+
+        <!-- Position and Image -->
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item style="width: 90%" label="Position" name="position">
+              <a-select v-model:value="updateform.position" placeholder="Select position">
+                <a-select-option v-for="[key, value] in Object.entries(positions)" :key="key" :value="key">
+                  {{ value }}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item style="width: 90%" label="Mentor" name="mentor">
+              <a-select v-model:value="updateform.mentorId" placeholder="Select mentor">
+                <a-select-option v-for="mentor in mentors" :key="mentor.id" :value="mentor.id">
+                  {{ mentor.fullname }}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
+
+    </a-modal>
+
+    <a-tooltip title="Application will export by selecting filters, not the current list">
+      <a-button style="float: right; background-color: green; color: aliceblue" @click="exportFile">
         Export
       </a-button>
     </a-tooltip>
@@ -232,38 +221,131 @@
         :data-source="interns"
         :pagination="pagination"
         @change="handlePaginationChange"
-        bordered
-        row-key="id"
+        :row-key="record => record.id"
         :expand-column-width="55"
         :scroll="{ x: 1500, y: 500 }"
+        :loading="tableLoading"
+        :row-class-name="(_record, index) => (index % 2 === 0 ? 'table-row-light' : 'table-row-dark')"
+        class="custom-table"
     >
-      <template #expandedRowRender="{ record }">
-        <p style="margin: 0">
-          {{ record.description }}
-        </p>
-      </template>
-
-      <template #expandColumnTitle>
-        <span style="color: red">Action</span>
+      <template #bodyCell="{ column, record }">
+        <template v-if="column.key === 'status'">
+          <a-tag :color="getStatusColor(record.status)">
+            {{ formatStatus(record.status) }}
+          </a-tag>
+        </template>
       </template>
     </a-table>
+
+    <!-- Delete Confirmation Modal -->
+    <a-modal
+        v-model:open="isDeleteModalVisible"
+        title="Confirm Deletion"
+        :closable="false"
+        :maskClosable="false"
+        :width="420"
+    >
+      <template #icon>
+        <ExclamationCircleOutlined style="color: #ff4d4f; font-size: 22px; margin-right: 10px" />
+      </template>
+      <div style="display: flex; align-items: center; margin-bottom: 16px">
+        <div style="background-color: #fff2f0; border-radius: 50%; width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; margin-right: 16px">
+          <ExclamationCircleOutlined style="color: #ff4d4f; font-size: 22px" />
+        </div>
+        <div>
+          <p style="font-size: 16px; font-weight: 500; margin-bottom: 8px">Are you sure you want to delete this intern?</p>
+          <p style="color: #666; margin-bottom: 0">This action cannot be undone.</p>
+        </div>
+      </div>
+      <template #footer>
+        <a-button key="cancel" @click="cancelDelete">Cancel</a-button>
+        <a-button key="delete" danger  type="primary" @click="confirmDelete">Delete</a-button>
+      </template>
+    </a-modal>
   </div>
 </template>
 
 <script setup>
 import {ref, reactive, computed, onMounted, h} from "vue";
 import {useInternStore} from "@/stores/internStore";
-import userImage from "@/assets/user.png";
+import {PlusOutlined, EditOutlined, DeleteOutlined, ExclamationCircleOutlined} from "@ant-design/icons-vue";
+import {useMentorStore} from "@/stores/mentorStore.js";
 
+const columns = [
+  {
+    title: "ID",
+    dataIndex: "id",
+    key: "id",
+    width: 80,
+    fixed: "left",
+    align: "center",
+  },
+  {
+    title: "Full Name",
+    dataIndex: "fullname",
+    key: "fullname",
+    ellipsis: true,
+  },
+  {
+    title: "Email",
+    dataIndex: "email",
+    key: "email",
+    ellipsis: true,
+  },
+  {
+    title: "Phone",
+    dataIndex: "phone",
+    key: "phone",
+    align: "center",
+  },
+  {
+    title: "Start Date",
+    dataIndex: "startDate",
+    key: "startDate",
+    align: "center",
+  },
+  {
+    title: "Status",
+    dataIndex: "status",
+    key: "status",
+    align: "center",
+    fixed: "right",
+  },
+  {
+    title: "Action",
+    key: "action",
+    width: 100,
+    align: "center",
+    fixed: "right",
+    customRender: ({record}) => {
+      return h(
+          "span",
+          { class: "action-buttons" },
+          [
+            h(EditOutlined, {
+              class: "edit-icon",
+              onClick: () => handleEdit(record)
+            }),
+            h(DeleteOutlined, {
+              class: "delete-icon",
+              onClick: () => handleDelete(record)
+            })
+          ]
+      );
+    }
+  }
+]
 const internStore = useInternStore();
-const columns = ref([]);
+const mentorStore = useMentorStore();
+// const columns = ref([]);
 const addInternForm = ref(null);
+const updateInternForm = ref(null);
 const selectedFile = ref(null);
 
-const {add, uploadImage, filterStoreInterns, exportInternsToExcel} =
-    internStore;
+const {add, uploadImage, filterStoreInterns, exportInternsToExcel} = internStore;
 
 const interns = computed(() => internStore.interns);
+const mentors = computed(() => mentorStore.mentors);
 const currentPage = computed(() => internStore.currentPage);
 const totalElements = computed(() => internStore.totalElements);
 const positions = {
@@ -286,6 +368,21 @@ const form = reactive({
   image: "",
 });
 
+const updateform = reactive({
+  id: null,
+  email: null,
+  fullname: null,
+  phone: null,
+  dob: null,
+  startDate: null,
+  endDate: null,
+  position: null,
+  image: "",
+  mentorId: null,
+});
+
+const isOpenUpdate = ref(false);
+
 const filters = reactive({
   position: null,
   status: null,
@@ -303,61 +400,6 @@ const pagination = reactive({
   showQuickJumper: true,
 });
 
-// Generate Columns Dynamically from Response Data
-const generateColumns = (data) => {
-  if (!data || data.length === 0) return;
-
-  const statusStyles = {
-    ONBOARD: {backgroundColor: "rgba(30, 144, 255, 0.2)", color: "#1E90FF"},
-    OJT: {backgroundColor: "rgba(50, 205, 50, 0.2)", color: "#32CD32"},
-    FINISH_ONBOARD: {
-      backgroundColor: "rgba(255, 165, 0, 0.2)",
-      color: "#FFA500",
-    }, // Light orange
-    TERMINATED: {backgroundColor: "rgba(255, 69, 0, 0.2)", color: "#FF4500"},
-    COMPLETED: {backgroundColor: "rgba(128, 0, 128, 0.2)", color: "#800080"},
-  };
-
-  columns.value = Object.keys(data[0]).map((key) => ({
-    title: key
-        .replace(/([A-Z])/g, " $1")
-        .replace(/^./, (str) => str.toUpperCase()),
-    dataIndex: key,
-    fixed:
-        key === "id"
-            ? "left"
-            : key === "position"
-                ? "right"
-                : key === "status"
-                    ? "right"
-                    : undefined,
-    width: key === "id" ? 40 : key === "status" || key === "position" ? 89 : 88,
-    customRender:
-        key === "image"
-            ? ({text}) =>
-                h("img", {
-                  src: text || userImage,
-                  alt: "User",
-                  style: "max-width: 90%; height: 80px;",
-                })
-            : key === "status"
-                ? ({text}) =>
-                    h(
-                        "span",
-                        {
-                          style: {
-                            ...statusStyles[text],
-                            padding: "4px 8px",
-                            borderRadius: "4px",
-                            display: "inline-block",
-                            textAlign: "center",
-                          },
-                        },
-                        text
-                    )
-                : undefined,
-  }));
-};
 
 const applyFilters = () => {
   internStore.filters = {...filters};
@@ -434,14 +476,142 @@ const handleSubmit = async () => {
       });
 };
 
+const handleUpdateSubmit = async () => {
+  updateInternForm.value
+      .validate()
+      .then(async () => {
+        await internStore.update(updateform.id, updateform);
+        isOpenUpdate.value = false;
+      })
+      .catch((error) => {
+        console.log("Form invalid:", error);
+      });
+};
+
 onMounted(async () => {
-  await filterStoreInterns();
-  generateColumns(internStore.interns);
+  tableLoading.value = true;
+  try {
+    await filterStoreInterns();
+    await mentorStore.list(1, 10000);
+  } finally {
+    tableLoading.value = false;
+  }
 });
+const handleEdit = (record) => {
+  // Implement your edit logic here
+  Object.assign(updateform, record);
+  isOpenUpdate.value = true;
+  console.log("Edit intern:", record);
+};
+
+
+const isDeleteModalVisible = ref(false);
+const recordToDelete = ref(null);
+const handleDelete = (record) => {
+  recordToDelete.value = record;
+  isDeleteModalVisible.value = true;
+};
+
+const confirmDelete = async () => {
+  try {
+    await internStore.delete(recordToDelete.value.id);
+    isDeleteModalVisible.value = false;
+    recordToDelete.value = null;
+  } catch (error) {
+    console.error("Error deleting intern:", error);
+  }
+};
+
+const cancelDelete = () => {
+  isDeleteModalVisible.value = false;
+  recordToDelete.value = null;
+};
+
+const tableLoading = ref(false);
+
+const getStatusColor = (status) => {
+  const statusColors = {
+    'ONBOARD': 'blue',
+    'FINISH_ONBOARD': 'cyan',
+    'OJT': 'green',
+    'FINISH_OJT': 'lime',
+    'TERMINATED': 'red',
+    'COMPLETED': 'purple'
+  };
+  return statusColors[status] || 'default';
+};
+
+const formatStatus = (status) => {
+  return status?.replace(/_/g, ' ').split(' ')
+      .map(word => word.charAt(0) + word.slice(1).toLowerCase())
+      .join(' ');
+};
 </script>
 
 <style scoped>
 .header-title {
   margin-left: 5px;
 }
+
+.custom-table {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.custom-table :deep(.ant-table) {
+  border-radius: 8px;
+}
+
+.custom-table :deep(.ant-table-thead > tr > th) {
+  background-color: #f0f5ff;
+  font-weight: 600;
+  padding: 12px 16px;
+}
+
+.table-row-light {
+  background-color: #ffffff;
+}
+
+.table-row-dark {
+  background-color: #fafafa;
+}
+
+.custom-table :deep(.ant-table-tbody > tr:hover > td) {
+  background-color: #e6f7ff !important;
+}
+/* Action icon styles with :deep() */
+.custom-table :deep(.edit-icon) {
+  color: #1890ff;
+  font-size: 16px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.custom-table :deep(.edit-icon:hover) {
+  background-color: rgba(24, 144, 255, 0.1);
+}
+
+.custom-table :deep(.delete-icon) {
+  color: #ff4d4f;
+  font-size: 16px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.custom-table :deep(.delete-icon:hover) {
+  background-color: rgba(255, 77, 79, 0.1);
+}
+
+/* Status tag styles */
+.custom-table :deep(.ant-tag) {
+  border-radius: 12px;
+  padding: 0 10px;
+  font-weight: 500;
+}
 </style>
+

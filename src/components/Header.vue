@@ -25,7 +25,7 @@
                 <UserOutlined />
               </template>
             </a-avatar>
-            <down-outlined />
+            <DownOutlined />
           </a-button>
         </a-dropdown>
       </div>
@@ -39,6 +39,7 @@ import { useRouter } from 'vue-router';
 import { UserOutlined } from "@ant-design/icons-vue";
 import { computed } from "vue";
 import PAGES from "@/constants/pages";
+import { DownOutlined } from "@ant-design/icons-vue";
 
 const authStore = useAuthStore();
 const router = useRouter();

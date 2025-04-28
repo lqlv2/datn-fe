@@ -25,5 +25,6 @@ const isAuthenticated = computed(() => authStore.isAuthenticated)
 <style>
 body {
   margin: 0;
+  overflow: hidden;
 }
 </style>

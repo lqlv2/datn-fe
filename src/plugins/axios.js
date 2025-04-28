@@ -10,7 +10,10 @@ const axiosInstance = axios.create({
 });
 
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+      console.log(response.data)
+      return response
+  },
   (error) => {
     // Check if the error response has data
     console.log("Axios Error:", error); // This will show you the full error structure
