@@ -28,7 +28,7 @@ export const updateTask = (taskRequest) => {
 };
 
 export const updateTaskProgress = (updateStatusRequest) => {
-  return axiosInstance.put(`${API_TASK}/update-progress`, updateStatusRequest);
+  return axiosInstance.put(`${API_TASK}/progress`, updateStatusRequest);
 };
 
 export const addCommentToTask = (commentRequest) => {

@@ -12,28 +12,15 @@ const quillEditTaskRef = ref(null);
 const isModalOpen = ref(false);
 const isAddTaskModalOpen = ref(false);
 const isTaskDetailModalOpen = ref(false);
-const router = useRouter();
-const selectedInternAddForm = ref(null);
-const selectedIntern = ref(null);
-const projectStore = useProjectStore();
-const authStore = useAuthStore();
 const taskStore = useTaskStore();
-const internsOfProject = computed(() => taskStore.internsOfProject);
 const allTasks = computed(() => taskStore.allTasks);
-const ownTasks = computed(() => taskStore.ownTasks);
 const currentPage = computed(() => taskStore.currentPage);
 const {
   fetchOwnTasks,
-  fetchAllTasks,
-  setSelectedTask,
-  clearSelectedTask,
-  fetchInternsOfProject,
+  updateTaskStatus,
   createTask,
-  updateTask,
 } = taskStore;
-const selectedTask = computed(() => taskStore.selectedTask);
 
-const userRole = computed(() => authStore.userRole);
 const pagination = ref({
   current: 1,
   pageSize: 10,
@@ -51,36 +38,13 @@ const taskDetail = ref({
   title: "",
   description: "",
   dueDate: '',
+  progress: 0,
+  timeSpent: 0,
+  note: "",
 });
-
-const showAddTaskModal = () => {
-  projectStore.fetchPersonalProjects();
-  isAddTaskModalOpen.value = true;
-};
 
 const fetchTasks = (page = 1, size = 10, status = taskStore.status) => {
   fetchOwnTasks(page, size, status);
-};
-
-const redirectToTaskDetail = (task) => {
-  setSelectedTask(task);
-  router.push({name: "TaskDetail", params: {id: task.id}});
-};
-
-const showModal = async (record) => {
-  setSelectedTask(record);
-  await fetchInternsOfProject(record.id);
-  isModalOpen.value = true;
-};
-
-
-const handleAssignTask = async () => {
-
-  await taskStore.assignTask(selectedTask.value.id, Object.values(selectedIntern.value));
-  clearSelectedTask();
-  selectedIntern.value = null;
-  fetchTasks(currentPage.value, pagination.pageSize, taskStore.status);
-  isModalOpen.value = false;
 };
 
 const handleAddTask = async () => {
@@ -102,6 +66,13 @@ const editorOptions = {
   theme: 'snow',
   readOnly: true,
   modules: {
+    toolbar: false
+  },
+};
+
+const proofEditorOptions = {
+  theme: 'snow',
+  modules: {
     toolbar: [
       ['bold', 'italic', 'underline', 'strike'],
       ['blockquote', 'code-block'],
@@ -111,6 +82,7 @@ const editorOptions = {
       ['clean']
     ]
   },
+  placeholder: 'Enter work description...'
 };
 const editTask = (record) => {
   taskDetail.value = {
@@ -118,11 +90,14 @@ const editTask = (record) => {
     title: record.title,
     description: record.description,
     dueDate: record.dueDate,
+    progress: record.progress || 0,
+    timeSpent: record.timeSpent || 0,
+    note:  "",
   };
   isTaskDetailModalOpen.value = true;
 }
 const updateTaskInfo = async (id) => {
-  await updateTask({id: id, ...taskDetail.value});
+  await updateTaskStatus({...taskDetail.value, taskId: id});
   fetchTasks(currentPage.value, pagination.pageSize, taskStore.status);
   isTaskDetailModalOpen.value = false;
 }
@@ -189,14 +164,6 @@ const updateTaskInfo = async (id) => {
           width="150"
           align="center"
       />
-      <a-table-column
-          title="Created At"
-          data-index="createdAt"
-          key="createdAt"
-          width="150"
-          align="center"
-      />
-
       <a-table-column title="Actions" align="center" fixed="right" :width="200">
         <template #default="{ record }">
           <a-button
@@ -222,36 +189,55 @@ const updateTaskInfo = async (id) => {
         width="60vw"
     >
       <a-form layout="vertical">
-        <a-form-item label="Title" required>
-          <a-input
-              v-model:value="taskDetail.title"
-              placeholder="Enter task title"
-              :disabled="true"
+        <a-row>
+          <a-col :span="18">
+            <a-form-item label="Title">
+              <a-input
+                  v-model:value="taskDetail.title"
+                  placeholder="Enter task title"
+                  :disabled="true"
 
-          />
-        </a-form-item>
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :span="6">
+            <a-form-item label="Due Date">
+              <a-date-picker
+                  :disabled="true"
+                  v-model:value="taskDetail.dueDate"
+                  placeholder="Select due date"
+                  format="YYYY-MM-DD"
+                  value-format="YYYY-MM-DD"
+                  :disabledDate="(current) => current && current < new Date().setHours(0,0,0,0)"
+                  style="width: 100%"
+              />
+            </a-form-item>
+          </a-col>
+        </a-row>
+
         <div style="height: 280px">
-          <a-form-item label="Description" required>
+          <a-form-item label="Description">
             <div style="height: 200px">
-              <QuillEditor v-model:content="taskDetail.description" content-type="html" :options="editorOptions" readonly
+              <QuillEditor v-model:content="taskDetail.description" content-type="html" :options="editorOptions"
+                           readonly
                            ref="quillEditorRef"/>
             </div>
           </a-form-item>
         </div>
 
-        <a-form-item label="Due Date" required>
-          <a-date-picker
-              :disabled="true"
-              v-model:value="taskDetail.dueDate"
-              placeholder="Select due date"
-              format="YYYY-MM-DD"
-              value-format="YYYY-MM-DD"
-              :disabledDate="(current) => current && current < new Date().setHours(0,0,0,0)"
-              style="width: 100%"
-          />
-        </a-form-item>
         <a-form-item label="Progress">
-          <a-slider/>
+          <a-slider v-model:value="taskDetail.progress" :min="0" :max="100" :step="5"/>
+        </a-form-item>
+        
+        <a-form-item label="Time Spent (hours)">
+          <a-input-number v-model:value="taskDetail.timeSpent" :min="0" :step="0.5" style="width: 100%"/>
+        </a-form-item>
+        
+        <a-form-item label="Proof of Work">
+          <div style="height: 200px">
+            <QuillEditor v-model:content="taskDetail.proof" content-type="html" :options="proofEditorOptions"
+                       ref="quillEditTaskRef"/>
+          </div>
         </a-form-item>
       </a-form>
       <template #footer>

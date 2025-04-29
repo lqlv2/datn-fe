@@ -140,16 +140,10 @@
       <a-form layout="vertical" ref="updateInternForm" :model="updateform">
         <!-- Full Name and Email -->
         <a-row :gutter="16">
-          <a-col :span="12">
+          <a-col :span="24">
             <a-form-item style="width: 90%" label="Full Name" name="fullname"
                          :rules="[{ required: true, message: 'Please input name' }]">
               <a-input v-model:value="updateform.fullname" placeholder="Enter full name"/>
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item style="width: 90%" label="Email" name="email"
-                         :rules="[{ required: true, message: 'Please input email' }]">
-              <a-input v-model:value="updateform.email" placeholder="Enter email"/>
             </a-form-item>
           </a-col>
         </a-row>
@@ -157,14 +151,15 @@
         <!-- Phone and Date of Birth -->
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item style="width: 90%" label="Phone" name="phone"
-                         :rules="[{ required: true, message: 'Please input phone' }]">
-              <a-input v-model:value="updateform.phone" placeholder="Enter phone number"/>
+            <a-form-item style="width: 90%" label="Email" name="email"
+                         :rules="[{ required: true, message: 'Please input email' }]">
+              <a-input v-model:value="updateform.email" placeholder="Enter email"/>
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="Date of Birth" name="dob">
-              <a-date-picker v-model:value="form.dob" style="width: 100%" placeholder="Select date of birth"/>
+            <a-form-item style="width: 90%" label="Phone" name="phone"
+                         :rules="[{ required: true, message: 'Please input phone' }]">
+              <a-input v-model:value="updateform.phone" placeholder="Enter phone number"/>
             </a-form-item>
           </a-col>
         </a-row>
@@ -173,12 +168,17 @@
         <a-row :gutter="16">
           <a-col :span="12">
             <a-form-item style="width: 90%" label="Start Date" name="startDate">
-              <a-date-picker v-model:value="updateform.startDate" style="width: 100%" placeholder="Select start date"/>
+              <a-date-picker v-model:value="updateform.startDate" style="width: 100%" placeholder="Select start date"
+                             format="YYYY-MM-DD"
+                             value-format="YYYY-MM-DD"
+              />
             </a-form-item>
           </a-col>
           <a-col :span="12">
             <a-form-item label="End Date" name="endDate">
-              <a-date-picker v-model:value="updateform.endDate" style="width: 100%" placeholder="Select end date"/>
+              <a-date-picker v-model:value="updateform.endDate" style="width: 100%" placeholder="Select end date"
+                             format="YYYY-MM-DD"
+                             value-format="YYYY-MM-DD"/>
             </a-form-item>
           </a-col>
         </a-row>
@@ -246,20 +246,22 @@
         :width="420"
     >
       <template #icon>
-        <ExclamationCircleOutlined style="color: #ff4d4f; font-size: 22px; margin-right: 10px" />
+        <ExclamationCircleOutlined style="color: #ff4d4f; font-size: 22px; margin-right: 10px"/>
       </template>
       <div style="display: flex; align-items: center; margin-bottom: 16px">
-        <div style="background-color: #fff2f0; border-radius: 50%; width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; margin-right: 16px">
-          <ExclamationCircleOutlined style="color: #ff4d4f; font-size: 22px" />
+        <div
+            style="background-color: #fff2f0; border-radius: 50%; width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; margin-right: 16px">
+          <ExclamationCircleOutlined style="color: #ff4d4f; font-size: 22px"/>
         </div>
         <div>
-          <p style="font-size: 16px; font-weight: 500; margin-bottom: 8px">Are you sure you want to delete this intern?</p>
+          <p style="font-size: 16px; font-weight: 500; margin-bottom: 8px">Are you sure you want to delete this
+            intern?</p>
           <p style="color: #666; margin-bottom: 0">This action cannot be undone.</p>
         </div>
       </div>
       <template #footer>
         <a-button key="cancel" @click="cancelDelete">Cancel</a-button>
-        <a-button key="delete" danger  type="primary" @click="confirmDelete">Delete</a-button>
+        <a-button key="delete" danger type="primary" @click="confirmDelete">Delete</a-button>
       </template>
     </a-modal>
   </div>
@@ -320,7 +322,7 @@ const columns = [
     customRender: ({record}) => {
       return h(
           "span",
-          { class: "action-buttons" },
+          {class: "action-buttons"},
           [
             h(EditOutlined, {
               class: "edit-icon",
@@ -580,6 +582,7 @@ const formatStatus = (status) => {
 .custom-table :deep(.ant-table-tbody > tr:hover > td) {
   background-color: #e6f7ff !important;
 }
+
 /* Action icon styles with :deep() */
 .custom-table :deep(.edit-icon) {
   color: #1890ff;
