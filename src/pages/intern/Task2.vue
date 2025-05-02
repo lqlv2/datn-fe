@@ -235,7 +235,7 @@ const updateTaskInfo = async (id) => {
         
         <a-form-item label="Proof of Work">
           <div style="height: 200px">
-            <QuillEditor v-model:content="taskDetail.proof" content-type="html" :options="proofEditorOptions"
+            <QuillEditor v-model:content="taskDetail.note" content-type="html" :options="proofEditorOptions"
                        ref="quillEditTaskRef"/>
           </div>
         </a-form-item>

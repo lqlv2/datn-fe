@@ -16,7 +16,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { createRouter, createWebHistory } from 'vue-router';
 import ProjectDetail from '@/pages/ProjectDetail.vue';
 import ProjectTransfer from '@/pages/ProjectTransfer.vue';
-import TaskDetail from '@/pages/TaskDetail.vue';
+import TaskDetail from '@/pages/intern/TaskDetail.vue';
 import TabPage from '@/pages/TabPage.vue';
 import Feedback from '@/components/Feedback.vue';
 import Evaluation from '@/components/Evaluation.vue';
@@ -48,6 +48,11 @@ const routes = [
     path: '/intern/task',
     name: 'Task2',
     component: Task2,
+  },
+  {
+    path: '/intern/task/id',
+    name: 'Task3',
+    component: TaskDetail,
   },
   {
     path: '/intern',
