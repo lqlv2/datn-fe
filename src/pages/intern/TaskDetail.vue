@@ -19,10 +19,10 @@
         <div class="task-header">
           <a-typography-title :level="2">{{ task.title }}</a-typography-title>
           <div class="task-actions">
-            <a-button type="primary" icon="edit">Edit</a-button>
-            <a-button icon="share-alt">Share</a-button>
+            <a-button type="primary">Edit</a-button>
+            <a-button>Share</a-button>
             <a-dropdown>
-              <a-button icon="ellipsis">More</a-button>
+              <a-button>More</a-button>
               <a-menu slot="overlay">
                 <a-menu-item key="clone">Clone</a-menu-item>
                 <a-menu-item key="delete">Delete</a-menu-item>
@@ -33,12 +33,12 @@
 
         <!-- Task Description -->
         <a-card title="Description" class="task-card" style="margin-bottom: 24px">
-          <a-typography-text v-html="task.description" />
+          <a-typography-text v-html="task.description"/>
         </a-card>
 
         <!-- Activity Section -->
         <a-card title="Activity" class="task-card">
-          <a-tabs default-active-key="comments" type="card">
+          <a-tabs default-active-key="comments" type="card" @change="onTabChange">
             <a-tab-pane key="comments" tab="Comments">
               <div class="comment-section">
                 <div class="comments">
@@ -56,12 +56,12 @@
                           {{ comment.time }}
                         </a-typography-text>
                       </div>
-                      <a-typography-text v-html="comment.content" />
+                      <a-typography-text v-html="comment.content"/>
                     </template>
                   </a-comment>
                 </div>
                 <div class="comment-input">
-                  <QuillEditor content-type="html" v-model:content="newComment" />
+                  <QuillEditor content-type="html" v-model:content="newComment"/>
                   <a-button
                       type="primary"
                       :loading="commentLoading"
@@ -76,19 +76,48 @@
             <a-tab-pane key="workLog" tab="Work Log">
               <a-form layout="vertical">
                 <a-form-item label="Date">
-                  <a-date-picker style="width: 100%" />
+                  <a-date-picker style="width: 100%" format="YYYY-MM-DD" v-model:value="workLog.date"/>
                 </a-form-item>
                 <a-form-item label="Hours">
-                  <a-input-number style="width: 100%" :min="0" />
+                  <a-input-number style="width: 100%" :min="0" v-model:value="workLog.hours"/>
                 </a-form-item>
                 <a-form-item label="Description">
-                  <a-textarea style="width: 100%" :rows="4" />
+                  <a-textarea style="width: 100%" :rows="4" v-model:value="workLog.description"/>
                 </a-form-item>
-                <a-button type="primary">Add Work Log</a-button>
+                <a-button type="primary" @click="addWorkLog">Log work</a-button>
               </a-form>
             </a-tab-pane>
             <a-tab-pane key="history" tab="History">
-              <a-typography-text>History content here</a-typography-text>
+              <div class="comments">
+                <a-comment
+                    v-for="(comment, index) in history"
+                    :key="index"
+                    class="comment"
+                >
+                  <template #content>
+                    <div class="comment-header">
+                      <a-typography-text strong class="comment-author">
+                        {{ comment.username }}
+                      </a-typography-text>
+                      <a-typography-text type="secondary" class="comment-time">
+                        {{ comment.createdAt }}
+                      </a-typography-text>
+                    </div>
+                    <div v-if="comment.type === 'STATUS_UPDATE'">
+                      <a-typography-text type="secondary">
+                        Status changed from <strong> {{ comment.initialStatus }} </strong> to
+                        <strong>{{ comment.newStatus }} </strong>
+                      </a-typography-text>
+                    </div>
+                    <div v-else-if="comment.type === 'WORK_LOG'">
+                      <a-typography-text type="secondary">
+                        Work log added on <strong> {{ comment.date }} </strong> for <strong>{{ comment.time }}</strong>
+                        hours
+                      </a-typography-text>
+                    </div>
+                  </template>
+                </a-comment>
+              </div>
             </a-tab-pane>
           </a-tabs>
         </a-card>
@@ -104,11 +133,16 @@
               </a-tag>
             </a-descriptions-item>
             <a-descriptions-item label="Status">
-              <a-select v-model="task.status" style="width: 100%">
-                <a-select-option value="To Do">To Do</a-select-option>
-                <a-select-option value="In Progress">In Progress</a-select-option>
-                <a-select-option value="Done">Done</a-select-option>
-              </a-select>
+              <a-row>
+                <a-col :span="16">
+                  <a-select v-model:value="task.status" style="width: 140px" :default-value="task.status">
+                    <a-select-option v-for="st in status" :value="st.value">{{ st.label }}</a-select-option>
+                  </a-select>
+                </a-col>
+                <a-col :span="8">
+                  <a-button type="primary" style="margin-left: 10px" @click="updateTaskStatus">Update</a-button>
+                </a-col>
+              </a-row>
             </a-descriptions-item>
             <a-descriptions-item label="Created">
               {{ task.createdAt }}
@@ -124,8 +158,34 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue';
+import {onMounted, reactive, ref} from 'vue';
 import axiosInstance from '@/plugins/axios';
+import {useRoute} from "vue-router";
+import {message} from 'ant-design-vue';
+
+const router = useRoute();
+
+const status = [
+  {value: 'TODO', label: 'To Do'},
+  {value: 'IN_PROGRESS', label: 'In Progress'},
+  {value: 'PENDING', label: 'Pending'},
+  {value: 'DONE', label: 'Done'},
+];
+
+const history = reactive([{
+  "username": "",
+  "createdAt": "",
+  "date": "",
+  "time": 0,
+  "type": "WORK_LOG",
+  "initialStatus": null,
+  "newStatus": null
+}])
+const workLog = reactive({
+  date: '',
+  hours: 0,
+  description: '',
+});
 
 const task = reactive({
   id: '',
@@ -140,6 +200,26 @@ const task = reactive({
 const newComment = ref('');
 const commentLoading = ref(false);
 
+const onTabChange = (key) => {
+  if (key === 'comments') {
+    fetchTaskDetails(router.params.id);
+  } else if (key === 'history') {
+    fetchHistory();
+  }
+};
+const fetchHistory = async () => {
+  try {
+    const response = await axiosInstance.get(`/tasks/history?taskId=${task.id}`);
+    if (response.status === 200) {
+      history.length = 0;
+      response.data.data.forEach((item) => {
+        history.push(item)
+      });
+    }
+  } catch (error) {
+    console.error('Failed to fetch work logs:', error);
+  }
+};
 const priorityColor = (priority) => {
   switch (priority) {
     case 'High':
@@ -150,6 +230,42 @@ const priorityColor = (priority) => {
       return 'green';
     default:
       return 'blue';
+  }
+};
+
+const updateTaskStatus = async () => {
+  try {
+    const response = await axiosInstance.put(`/tasks/status`, {
+      taskId: task.id,
+      status: task.status,
+    });
+    if (response.status === 200) {
+      message.success('Task status updated successfully');
+    }
+  } catch (error) {
+    console.error('Failed to update task status:', error);
+  }
+  await fetchHistory()
+};
+
+const addWorkLog = async () => {
+  if (workLog.date && workLog.hours > 0 && workLog.description) {
+    try {
+      const response = await axiosInstance.post('/tasks/log-work', {
+        taskId: task.id,
+        date: workLog.date,
+        time: workLog.hours,
+        description: workLog.description,
+      });
+      if (response.status === 200) {
+        message.success('Work log added successfully');
+        workLog.date = '';
+        workLog.hours = 0;
+        workLog.description = '';
+      }
+    } catch (error) {
+      console.error('Failed to add work log:', error);
+    }
   }
 };
 
@@ -171,9 +287,9 @@ const addComment = async () => {
   }
 };
 
-const fetchTaskDetails = async () => {
+const fetchTaskDetails = async (taskId) => {
   try {
-    const response = await axiosInstance.get(`/tasks/intern/${1}`);
+    const response = await axiosInstance.get(`/tasks/intern/${taskId}`);
     if (response.status === 200) {
       Object.entries(response.data.data).forEach(([key, value]) => {
         task[key] = value;
@@ -185,7 +301,7 @@ const fetchTaskDetails = async () => {
 };
 
 onMounted(() => {
-  fetchTaskDetails();
+  fetchTaskDetails(router.params.id);
 });
 </script>
 

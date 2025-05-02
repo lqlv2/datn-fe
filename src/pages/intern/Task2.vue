@@ -1,10 +1,10 @@
 <script setup>
-import {ref, onMounted, computed} from "vue";
-import {useAuthStore} from "@/stores/authStore";
+import {computed, onMounted, ref} from "vue";
 import {useTaskStore} from "@/stores/taskStore";
-import {useProjectStore} from "@/stores/projectStore";
 import {useRouter} from "vue-router";
 import {QuillEditor} from "@vueup/vue-quill";
+
+const router = useRouter();
 
 const quillEditorRef = ref(null);
 const quillEditTaskRef = ref(null);
@@ -85,16 +85,18 @@ const proofEditorOptions = {
   placeholder: 'Enter work description...'
 };
 const editTask = (record) => {
-  taskDetail.value = {
-    id: record.id,
-    title: record.title,
-    description: record.description,
-    dueDate: record.dueDate,
-    progress: record.progress || 0,
-    timeSpent: record.timeSpent || 0,
-    note:  "",
-  };
-  isTaskDetailModalOpen.value = true;
+  // taskDetail.value = {
+  //   id: record.id,
+  //   title: record.title,
+  //   description: record.description,
+  //   dueDate: record.dueDate,
+  //   progress: record.progress || 0,
+  //   timeSpent: record.timeSpent || 0,
+  //   note:  "",
+  // };
+  // isTaskDetailModalOpen.value = true;
+  router.push(`/intern/task/${record.id}`);
+
 }
 const updateTaskInfo = async (id) => {
   await updateTaskStatus({...taskDetail.value, taskId: id});
@@ -136,16 +138,13 @@ const updateTaskInfo = async (id) => {
           title="ID"
           data-index="id"
           key="id"
-          width="20"
           fixed="left"
-          align="center"
       />
 
       <a-table-column
           title="Title"
           data-index="title"
           key="title"
-          width="130"
           align="center"
       />
 
@@ -153,7 +152,6 @@ const updateTaskInfo = async (id) => {
           title="Status"
           data-index="status"
           key="status"
-          width="130"
           align="center"
       />
 
@@ -161,7 +159,6 @@ const updateTaskInfo = async (id) => {
           title="Due Date"
           data-index="dueDate"
           key="dueDate"
-          width="150"
           align="center"
       />
       <a-table-column title="Actions" align="center" fixed="right" :width="200">
@@ -228,15 +225,15 @@ const updateTaskInfo = async (id) => {
         <a-form-item label="Progress">
           <a-slider v-model:value="taskDetail.progress" :min="0" :max="100" :step="5"/>
         </a-form-item>
-        
+
         <a-form-item label="Time Spent (hours)">
           <a-input-number v-model:value="taskDetail.timeSpent" :min="0" :step="0.5" style="width: 100%"/>
         </a-form-item>
-        
+
         <a-form-item label="Proof of Work">
           <div style="height: 200px">
             <QuillEditor v-model:content="taskDetail.note" content-type="html" :options="proofEditorOptions"
-                       ref="quillEditTaskRef"/>
+                         ref="quillEditTaskRef"/>
           </div>
         </a-form-item>
       </a-form>

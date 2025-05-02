@@ -50,7 +50,7 @@ const routes = [
     component: Task2,
   },
   {
-    path: '/intern/task/id',
+    path: '/intern/task/:id',
     name: 'Task3',
     component: TaskDetail,
   },
