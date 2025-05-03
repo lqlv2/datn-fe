@@ -17,6 +17,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import ProjectDetail from '@/pages/ProjectDetail.vue';
 import ProjectTransfer from '@/pages/ProjectTransfer.vue';
 import TaskDetail from '@/pages/intern/TaskDetail.vue';
+import TaskDetailMentor from '@/pages/mentor/TaskDetailMentor.vue';
 import TabPage from '@/pages/TabPage.vue';
 import Feedback from '@/components/Feedback.vue';
 import Evaluation from '@/components/Evaluation.vue';
@@ -53,6 +54,11 @@ const routes = [
     path: '/intern/task/:id',
     name: 'Task3',
     component: TaskDetail,
+  },
+  {
+    path: '/mentor/task/:id',
+    name: 'TaskDetailMentor',
+    component: TaskDetailMentor,
   },
   {
     path: '/intern',

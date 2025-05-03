@@ -84,7 +84,7 @@
                 <a-form-item label="Description">
                   <a-textarea style="width: 100%" :rows="4" v-model:value="workLog.description"/>
                 </a-form-item>
-                <a-button type="primary" @click="addWorkLog">Log work</a-button>
+                <a-button type="primary" @click="addWorkLog" :disabled="router.query.internId">Log work</a-button>
               </a-form>
             </a-tab-pane>
             <a-tab-pane key="history" tab="History">
@@ -140,7 +140,7 @@
                   </a-select>
                 </a-col>
                 <a-col :span="8">
-                  <a-button type="primary" style="margin-left: 10px" @click="updateTaskStatus">Update</a-button>
+                  <a-button type="primary" style="margin-left: 10px" @click="updateTaskStatus" :disabled="router.query.internId">Update</a-button>
                 </a-col>
               </a-row>
             </a-descriptions-item>
@@ -289,7 +289,7 @@ const addComment = async () => {
 
 const fetchTaskDetails = async (taskId) => {
   try {
-    const response = await axiosInstance.get(`/tasks/intern/${taskId}`);
+    const response = await axiosInstance.get(`/tasks/intern/${taskId}?internId=${router.query.internId || '-1'}`);
     if (response.status === 200) {
       Object.entries(response.data.data).forEach(([key, value]) => {
         task[key] = value;

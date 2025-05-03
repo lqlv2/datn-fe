@@ -116,13 +116,15 @@ const editorOptions = {
   placeholder: 'Enter task description...'
 };
 const editTask = (record) => {
-  taskDetail.value = {
-    id: record.id,
-    title: record.title,
-    description: record.description,
-    dueDate: record.dueDate,
-  };
-  isTaskDetailModalOpen.value = true;
+  // taskDetail.value = {
+  //   id: record.id,
+  //   title: record.title,
+  //   description: record.description,
+  //   dueDate: record.dueDate,
+  // };
+  // isTaskDetailModalOpen.value = true;
+  router.push(`/mentor/task/${record.id}`);
+
 }
 const updateTaskInfo = async (id) => {
   await updateTask({id: id, ...taskDetail.value});

@@ -6,7 +6,7 @@ import {
   createTask,
   updateTaskProgress,
   addCommentToTask,
-  listInternOfProject, updateTask,
+  listInternOfProject, updateTask, deleteTask,
 } from '@/services/taskService';
 
 export const useTaskStore = defineStore('task', {
@@ -96,6 +96,13 @@ export const useTaskStore = defineStore('task', {
       }
     },
 
+    async deleteTask (taskId) {
+        try {
+            await deleteTask(taskId);
+        } catch (error) {
+            console.error('Error deleting task:', error);
+        }
+    },
     setSelectedTask(task) {
       this.selectedTask = task;
     },

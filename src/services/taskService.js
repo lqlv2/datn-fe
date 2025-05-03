@@ -35,6 +35,10 @@ export const addCommentToTask = (commentRequest) => {
   return axiosInstance.post(`${API_TASK}/comment`, commentRequest);
 };
 
+export const deleteTask = (taskId) => {
+  return axiosInstance.delete(`${API_TASK}?taskId=${taskId}` );
+};
+
 export const listInternOfProject = (params) => {
   return axiosInstance.get(`${API_MENTOR}/interns/listByTask`, {
     params,
