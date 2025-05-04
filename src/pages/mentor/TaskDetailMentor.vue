@@ -98,6 +98,37 @@
         </a-card>
 
         <a-card class="task-card" title="Status" style="margin-top: 24px">
+          <a-table
+              :data-source="assignStatus"
+              :pagination="false"
+              :row-key="record => record.internId"
+              style="margin-bottom: 16px">
+            <a-table-column
+                title="Intern"
+                data-index="fullname"
+                key="intern"
+            />
+            <a-table-column
+                title="Assign status"
+                data-index="status"
+                key="status"
+            />
+            <a-table-column
+                title="Time spent"
+                data-index="timeSpent"
+                key="timeSpent"
+            />
+            <a-table-column
+                title="Actions"
+                data-index="action"
+                key="action"
+            >
+              <template #default="{ record }">
+                <a-button type="primary" v-if="record.status === 'Unassigned'" @click="handleAssignTask(record.taskId, record.internId)">Assign</a-button>
+                <a-button type="primary" v-else @click="viewDetail(record.taskId, record.internId)">View</a-button>
+              </template>
+            </a-table-column>
+          </a-table>
           <a-descriptions
               v-for="assignSt in assignStatus"
               :key="assignSt.internId"
@@ -105,17 +136,17 @@
               bordered
               class="status-description"
           >
-            <a-descriptions-item :label="assignSt.fullname">
-              <div class="status-row">
-                <span>{{ assignSt.status }}</span>
-                <div style="margin-left: auto;">
-                  <a-button type="primary" v-if="assignSt.status === 'Unassigned'" @click="handleAssignTask(assignSt.taskId, assignSt.internId)">Assign</a-button>
-                  <a-tooltip title="View Details" v-else>
-                    <EditOutlined style="color: blue" @click="viewDetail(assignSt.taskId, assignSt.internId)"/>
-                  </a-tooltip>
-                </div>
-              </div>
-            </a-descriptions-item>
+<!--            <a-descriptions-item :label="assignSt.fullname">-->
+<!--              <div class="status-row">-->
+<!--                <span>{{ assignSt.status }}</span>-->
+<!--                <div style="margin-left: auto;">-->
+<!--                  <a-button type="primary" v-if="assignSt.status === 'Unassigned'" @click="handleAssignTask(assignSt.taskId, assignSt.internId)">Assign</a-button>-->
+<!--                  <a-tooltip title="View Details" v-else>-->
+<!--                    <EditOutlined style="color: blue" @click="viewDetail(assignSt.taskId, assignSt.internId)"/>-->
+<!--                  </a-tooltip>-->
+<!--                </div>-->
+<!--              </div>-->
+<!--            </a-descriptions-item>-->
           </a-descriptions>
         </a-card>
       </a-col>

@@ -1,138 +1,3 @@
-<script setup>
-import {ref, onMounted, computed} from "vue";
-import {useAuthStore} from "@/stores/authStore";
-import {useTaskStore} from "@/stores/taskStore";
-import {useProjectStore} from "@/stores/projectStore";
-import {useRouter} from "vue-router";
-import {QuillEditor} from "@vueup/vue-quill";
-
-const quillEditorRef = ref(null);
-const quillEditTaskRef = ref(null);
-
-const isModalOpen = ref(false);
-const isAddTaskModalOpen = ref(false);
-const isTaskDetailModalOpen = ref(false);
-const router = useRouter();
-const selectedInternAddForm = ref(null);
-const selectedIntern = ref(null);
-const projectStore = useProjectStore();
-const authStore = useAuthStore();
-const taskStore = useTaskStore();
-const internsOfProject = computed(() => taskStore.internsOfProject);
-const allTasks = computed(() => taskStore.allTasks);
-const ownTasks = computed(() => taskStore.ownTasks);
-const currentPage = computed(() => taskStore.currentPage);
-const {
-  fetchOwnTasks,
-  fetchAllTasks,
-  setSelectedTask,
-  clearSelectedTask,
-  fetchInternsOfProject,
-  createTask,
-  updateTask,
-} = taskStore;
-const selectedTask = computed(() => taskStore.selectedTask);
-
-const userRole = computed(() => authStore.userRole);
-const pagination = ref({
-  current: 1,
-  pageSize: 10,
-  total: 0,
-});
-
-const newTask = ref({
-  title: "",
-  description: "",
-  dueDate: null,
-});
-
-const taskDetail = ref({
-  id: null,
-  title: "",
-  description: "",
-  dueDate: '',
-});
-
-const showAddTaskModal = () => {
-  projectStore.fetchPersonalProjects();
-  isAddTaskModalOpen.value = true;
-};
-
-const fetchTasks = (page = 1, size = 10, status = taskStore.status) => {
-  if (userRole.value === "INTERN") {
-    fetchOwnTasks(page, size, status);
-  } else {
-    fetchAllTasks(page, size, status);
-  }
-};
-
-const redirectToTaskDetail = (task) => {
-  setSelectedTask(task);
-  router.push({name: "TaskDetail", params: {id: task.id}});
-};
-
-const showModal = async (record) => {
-  setSelectedTask(record);
-  await fetchInternsOfProject(record.id);
-  isModalOpen.value = true;
-};
-
-
-
-const handleAssignTask = async () => {
-
-  await taskStore.assignTask(selectedTask.value.id, Object.values(selectedIntern.value));
-  clearSelectedTask();
-  selectedIntern.value = null;
-  fetchTasks(currentPage.value, pagination.pageSize, taskStore.status);
-  isModalOpen.value = false;
-};
-
-const handleAddTask = async () => {
-  await createTask(newTask.value);
-  fetchTasks(currentPage.value, pagination.pageSize, taskStore.status);
-  isAddTaskModalOpen.value = false;
-  isModalOpen.value = true;
-};
-
-onMounted(fetchTasks);
-
-const handlePaginationChange = (paginationConfig) => {
-  pagination.pageSize = paginationConfig.pageSize;
-  fetchTasks(paginationConfig.current, pagination.pageSize, taskStore.status);
-};
-const editorOptions = {
-  theme: 'snow',
-  modules: {
-    toolbar: [
-      ['bold', 'italic', 'underline', 'strike'],
-      ['blockquote', 'code-block'],
-      [{'header': 1}, {'header': 2}],
-      [{'list': 'ordered'}, {'list': 'bullet'}],
-      ['link', 'image'],
-      ['clean']
-    ]
-  },
-  placeholder: 'Enter task description...'
-};
-const editTask = (record) => {
-  // taskDetail.value = {
-  //   id: record.id,
-  //   title: record.title,
-  //   description: record.description,
-  //   dueDate: record.dueDate,
-  // };
-  // isTaskDetailModalOpen.value = true;
-  router.push(`/mentor/task/${record.id}`);
-
-}
-const updateTaskInfo = async (id) => {
-  await updateTask({id: id, ...taskDetail.value});
-  fetchTasks(currentPage.value, pagination.pageSize, taskStore.status);
-  isTaskDetailModalOpen.value = false;
-}
-</script>
-
 <template>
   <div>
     <h2 style="margin-left: 10px">Task List</h2>
@@ -228,54 +93,28 @@ const updateTaskInfo = async (id) => {
               margin-left: 7px;
             "
           >
-            Edit
-          </a-button>
-
-          <a-button
-              @click="showModal(record)"
-              type="text"
-              style="
-              padding: 2px;
-              min-width: auto;
-              height: auto;
-              margin-left: 7px;
-            "
-          >
-            Assign
-          </a-button>
-
-          <a-button
-              @click="deleteTask(record)"
-              type="text"
-              style="
-              padding: 2px;
-              min-width: auto;
-              height: auto;
-              margin-left: 7px;
-            "
-          >
-            Delete
+            Detail
           </a-button>
         </template>
       </a-table-column>
     </a-table>
 
-    <a-modal v-model:open="isModalOpen" title="Assign Tasks" @ok="handleAssignTask" class="modal-1000px">
-      <a-select
-          v-model:value="selectedIntern"
-          placeholder="Select Intern"
-          style="width: 100%"
-          mode="multiple"
-      >
-        <a-select-option
-            v-for="intern in internsOfProject"
-            :key="intern.id"
-            :value="intern.id"
-        >
-          {{ intern.fullname }}
-        </a-select-option>
-      </a-select>
-    </a-modal>
+<!--    <a-modal v-model:open="isModalOpen" title="Assign Tasks" @ok="handleAssignTask" class="modal-1000px">-->
+<!--      <a-select-->
+<!--          v-model:value="selectedIntern"-->
+<!--          placeholder="Select Intern"-->
+<!--          style="width: 100%"-->
+<!--          mode="multiple"-->
+<!--      >-->
+<!--        <a-select-option-->
+<!--            v-for="intern in internsOfProject"-->
+<!--            :key="intern.id"-->
+<!--            :value="intern.id"-->
+<!--        >-->
+<!--          {{ intern.fullname }}-->
+<!--        </a-select-option>-->
+<!--      </a-select>-->
+<!--    </a-modal>-->
 
     <a-modal
         v-model:open="isAddTaskModalOpen"
@@ -349,6 +188,134 @@ const updateTaskInfo = async (id) => {
     </a-modal>
   </div>
 </template>
+<script setup>
+import {ref, onMounted, computed} from "vue";
+import {useAuthStore} from "@/stores/authStore";
+import {useTaskStore} from "@/stores/taskStore";
+import {useProjectStore} from "@/stores/projectStore";
+import {useRouter} from "vue-router";
+import {QuillEditor} from "@vueup/vue-quill";
+
+const quillEditorRef = ref(null);
+const quillEditTaskRef = ref(null);
+
+const isModalOpen = ref(false);
+const isAddTaskModalOpen = ref(false);
+const isTaskDetailModalOpen = ref(false);
+const router = useRouter();
+const selectedInternAddForm = ref(null);
+const selectedIntern = ref(null);
+const projectStore = useProjectStore();
+const authStore = useAuthStore();
+const taskStore = useTaskStore();
+const internsOfProject = computed(() => taskStore.internsOfProject);
+const allTasks = computed(() => taskStore.allTasks);
+const ownTasks = computed(() => taskStore.ownTasks);
+const currentPage = computed(() => taskStore.currentPage);
+const {
+  fetchOwnTasks,
+  fetchAllTasks,
+  setSelectedTask,
+  clearSelectedTask,
+  fetchInternsOfProject,
+  createTask,
+  updateTask,
+} = taskStore;
+const selectedTask = computed(() => taskStore.selectedTask);
+
+const userRole = computed(() => authStore.userRole);
+const pagination = ref({
+  current: 1,
+  pageSize: 10,
+  total: 0,
+});
+
+const newTask = ref({
+  title: "",
+  description: "",
+  dueDate: null,
+});
+
+const taskDetail = ref({
+  id: null,
+  title: "",
+  description: "",
+  dueDate: '',
+});
+
+const showAddTaskModal = () => {
+  projectStore.fetchPersonalProjects();
+  isAddTaskModalOpen.value = true;
+};
+
+const fetchTasks = (page = 1, size = 10, status = taskStore.status) => {
+  if (userRole.value === "INTERN") {
+    fetchOwnTasks(page, size, status);
+  } else {
+    fetchAllTasks(page, size, status);
+  }
+};
+
+const redirectToTaskDetail = (task) => {
+  setSelectedTask(task);
+  router.push({name: "TaskDetail", params: {id: task.id}});
+};
+
+const showModal = async (record) => {
+  setSelectedTask(record);
+  await fetchInternsOfProject(record.id);
+  isModalOpen.value = true;
+};
+
+
+
+const handleAssignTask = async () => {
+
+  await taskStore.assignTask(selectedTask.value.id, Object.values(selectedIntern.value));
+  clearSelectedTask();
+  selectedIntern.value = null;
+  fetchTasks(currentPage.value, pagination.pageSize, taskStore.status);
+  isModalOpen.value = false;
+};
+
+const handleAddTask = async () => {
+  const task = await createTask(newTask.value);
+  fetchTasks(currentPage.value, pagination.pageSize, taskStore.status);
+  isAddTaskModalOpen.value = false;
+  console.log(task);
+  task.id &&  await router.push(`/mentor/task/${task.id}`);
+};
+
+onMounted(fetchTasks);
+
+const handlePaginationChange = (paginationConfig) => {
+  pagination.pageSize = paginationConfig.pageSize;
+  fetchTasks(paginationConfig.current, pagination.pageSize, taskStore.status);
+};
+const editorOptions = {
+  theme: 'snow',
+  modules: {
+    toolbar: [
+      ['bold', 'italic', 'underline', 'strike'],
+      ['blockquote', 'code-block'],
+      [{'header': 1}, {'header': 2}],
+      [{'list': 'ordered'}, {'list': 'bullet'}],
+      ['link', 'image'],
+      ['clean']
+    ]
+  },
+  placeholder: 'Enter task description...'
+};
+const editTask = (record) => {
+  router.push(`/mentor/task/${record.id}`);
+
+}
+const updateTaskInfo = async (id) => {
+  await updateTask({id: id, ...taskDetail.value});
+  fetchTasks(currentPage.value, pagination.pageSize, taskStore.status);
+  isTaskDetailModalOpen.value = false;
+}
+</script>
 
 <style scoped>
 h2 {

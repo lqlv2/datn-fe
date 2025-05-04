@@ -57,6 +57,7 @@ export const useTaskStore = defineStore('task', {
       try {
         const response = await createTask(taskRequest);
         this.selectedTask = response.data.data;
+        return response.data.data;
       } catch (error) {
         console.error('Error creating task:', error);
       }

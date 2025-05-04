@@ -209,7 +209,7 @@ const onTabChange = (key) => {
 };
 const fetchHistory = async () => {
   try {
-    const response = await axiosInstance.get(`/tasks/history?taskId=${task.id}`);
+    const response = await axiosInstance.get(`/tasks/history?taskId=${task.id}&internId=${router.query.internId || '-1'}`);
     if (response.status === 200) {
       history.length = 0;
       response.data.data.forEach((item) => {

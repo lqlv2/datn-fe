@@ -20,9 +20,11 @@ import TaskDetail from '@/pages/intern/TaskDetail.vue';
 import TaskDetailMentor from '@/pages/mentor/TaskDetailMentor.vue';
 import TabPage from '@/pages/TabPage.vue';
 import Feedback from '@/components/Feedback.vue';
-import Evaluation from '@/components/Evaluation.vue';
+// import Evaluation from '@/components/Evaluation.vue';
+import Evaluation from '@/pages/Evaluation.vue';
 import Intern2 from "@/pages/mentor/Intern2.vue";
 import Task2 from "@/pages/intern/Task2.vue";
+import EvaluationDetail from "@/pages/EvaluationDetail.vue";
 
 const routes = [
   { path: PAGES.LOGIN, component: Login },
@@ -86,6 +88,11 @@ const routes = [
     component: Evaluation,
   },
   {
+    path: '/evaluation/detail',
+    name: 'EvaluationDetail',
+    component: EvaluationDetail,
+  },
+  {
     path: '/project',
     component: Project,
   },
@@ -113,23 +120,23 @@ const routes = [
     name: 'ProjectTransfer',
     component: ProjectTransfer,
   },
-  {
-    path: '/evaluation',
-    name: 'Evaluation',
-    component: TabPage,
-    children: [
-      {
-        path: 'eva-edu',
-        name: 'evaluation',
-        component: Evaluation,
-      },
-      {
-        path: 'eva-feedback',
-        name: 'feedback',
-        component: Feedback,
-      },
-    ],
-  },
+  // {
+  //   path: '/evaluation',
+  //   name: 'Evaluation',
+  //   component: TabPage,
+  //   children: [
+  //     {
+  //       path: 'eva-edu',
+  //       name: 'evaluation',
+  //       component: Evaluation,
+  //     },
+  //     {
+  //       path: 'eva-feedback',
+  //       name: 'feedback',
+  //       component: Feedback,
+  //     },
+  //   ],
+  // },
 ];
 
 const router = createRouter({
