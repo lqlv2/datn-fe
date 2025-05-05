@@ -88,7 +88,7 @@ const routes = [
     component: Evaluation,
   },
   {
-    path: '/evaluation/detail',
+    path: '/evaluation/:id',
     name: 'EvaluationDetail',
     component: EvaluationDetail,
   },
