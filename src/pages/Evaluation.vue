@@ -1,37 +1,38 @@
 <template>
   <div class="container mx-auto p-4">
     <a-card title="Intern Evaluation Management" class="mb-4">
-      <div class="flex justify-between mb-4">
-        <a-button type="primary" @click="showAddModal">
-          <plus-outlined /> Add Evaluation
-        </a-button>
-        <a-input-search
-            v-model:value="searchText"
-            placeholder="Search by intern name..."
-            style="width: 200px"
-            @search="onSearch"
-        />
-      </div>
+      <a-row>
+        <a-col :span="6">
+          <a-input v-model:value="searchText" placeholder="Search by intern name..." @search="onSearch" />
+        </a-col>
 
-      <a-table
-          :columns="columns"
-          :data-source="dataSource"
-          :pagination="{ pageSize: 10 }"
-          :loading="loading"
-          row-key="id"
-      >
+        <a-col :span="6" >
+          <a-select placeholder="Overall" style="width: 100%;">
+            <a-select-option value="Excellent">Excellent</a-select-option>
+            <a-select-option value="Good">Good</a-select-option>
+            <a-select-option value="Average">Average</a-select-option>
+            <a-select-option value="Poor">Poor</a-select-option>
+          </a-select>
+        </a-col>
+        <a-button type="primary">Search</a-button>
+      </a-row>
+      <a-table :columns="columns" :data-source="dataSource" :pagination="pagination" :loading="loading" row-key="id">
+        <template #averageScore="{ text }">
+          <a-tag v-if="String(text) !== '-1'" :color="getStatusColor(text)">
+            {{ text }}
+          </a-tag>
+          <a-tag v-else color="gray">N/A</a-tag>
+        </template>
         <template #status="{ text }">
-          <a-tag :color="getStatusColor(text)">
+          <a-tag v-if="text" :color="getStatusColor(text)">
             {{ text.toUpperCase() }}
           </a-tag>
+          <a-tag v-else color="gray">N/A</a-tag>
         </template>
         <template #action="{ record }">
           <a-space>
             <a-button type="link" @click="viewEvaluation(record)">
               <eye-outlined /> View
-            </a-button>
-            <a-button type="link" @click="editEvaluation(record)">
-              <edit-outlined /> Edit
             </a-button>
           </a-space>
         </template>
@@ -39,18 +40,9 @@
     </a-card>
 
     <!-- Add Evaluation Modal -->
-    <a-modal
-        v-model:visible="addModalVisible"
-        title="Add New Evaluation"
-        @ok="handleAddEvaluation"
-        :confirm-loading="confirmLoading"
-    >
-      <a-form
-          :model="formState"
-          :rules="formRules"
-          layout="vertical"
-          ref="formRef"
-      >
+    <a-modal v-model:visible="addModalVisible" title="Add New Evaluation" @ok="handleAddEvaluation"
+      :confirm-loading="confirmLoading">
+      <a-form :model="formState" :rules="formRules" layout="vertical" ref="formRef">
         <a-form-item label="Intern Name" name="name">
           <a-input v-model:value="formState.name" placeholder="Enter intern name" />
         </a-form-item>
@@ -58,13 +50,8 @@
           <a-input v-model:value="formState.project" placeholder="Enter project name" />
         </a-form-item>
         <a-form-item label="Score" name="score">
-          <a-input-number
-              v-model:value="formState.score"
-              :min="0"
-              :max="100"
-              placeholder="Enter score (0-100)"
-              style="width: 100%"
-          />
+          <a-input-number v-model:value="formState.score" :min="0" :max="100" placeholder="Enter score (0-100)"
+            style="width: 100%" />
         </a-form-item>
         <a-form-item label="Status" name="status">
           <a-select v-model:value="formState.status" placeholder="Select status">
@@ -80,13 +67,12 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import {ref, computed, onMounted, reactive} from 'vue';
 import {
-  PlusOutlined,
   EyeOutlined,
-  EditOutlined,
 } from '@ant-design/icons-vue';
 import { message } from 'ant-design-vue';
+import axiosInstance from "@/plugins/axios.js";
 
 // Mock Data
 const dataSource = ref([
@@ -131,31 +117,30 @@ const dataSource = ref([
 const columns = [
   {
     title: 'Intern Name',
-    dataIndex: 'name',
+    dataIndex: 'internName',
     key: 'name',
-    sorter: (a, b) => a.name.localeCompare(b.name),
   },
   {
     title: 'Mentor Name',
-    dataIndex: 'project',
+    dataIndex: 'mentorName',
     key: 'project',
   },
   {
     title: 'Start date',
-    dataIndex: 'project',
+    dataIndex: 'startDate',
     key: 'project',
   },
   {
     title: 'End date',
-    dataIndex: 'project',
+    dataIndex: 'endDate',
     key: 'project',
   },
 
   {
     title: 'Score',
-    dataIndex: 'score',
-    key: 'score',
-    sorter: (a, b) => a.score - b.score,
+    dataIndex: 'averageScore',
+    key: 'averageScore',
+    slots: { customRender: 'averageScore' },
   },
   {
     title: 'Status',
@@ -207,7 +192,7 @@ const loading = ref(false);
 const filteredData = computed(() => {
   if (!searchText.value) return dataSource.value;
   return dataSource.value.filter((item) =>
-      item.name.toLowerCase().includes(searchText.value.toLowerCase())
+    item.name.toLowerCase().includes(searchText.value.toLowerCase())
   );
 });
 
@@ -263,9 +248,27 @@ const getStatusColor = (status) => {
   }
 };
 
+const pagination = reactive({
+  current: 1,
+  pageSize: 10,
+  total: dataSource.value.totalElements || 0,
+});
+
 const onSearch = () => {
   // Triggered when search is performed
 };
+
+onMounted(() => {
+   axiosInstance.get(('/admin/evaluation'))
+    .then((response) => {
+      dataSource.value = response.data.data;
+      pagination.total = response.data.totalElements;
+    })
+    .catch((error) => {
+      console.error('Error fetching evaluations:', error);
+    });
+})
+
 </script>
 
 <style scoped>
