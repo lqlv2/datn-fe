@@ -100,7 +100,6 @@
           </a-col>
         </a-row>
 
-        <!-- Position and Image -->
         <a-row :gutter="16">
           <a-col :span="12">
             <a-form-item style="width: 90%" label="Position" name="position">
@@ -110,6 +109,8 @@
                 </a-select-option>
               </a-select>
             </a-form-item>
+          </a-col>
+            <a-col :span="12">
             <a-form-item style="width: 90%" label="Mentor" name="mentor">
               <a-select v-model:value="form.position" placeholder="Select position">
                 <a-select-option v-for="pos in positions" :key="pos" :value="pos">
@@ -118,20 +119,10 @@
               </a-select>
             </a-form-item>
           </a-col>
-          <a-col :span="12">
-            <a-form-item label="Image" name="image">
-              <a-upload name="file" list-type="picture-card" :maxCount="1" :onPreview="handlePreview"
-                        :customRequest="handleUpload">
-                <div>
-                  <plus-outlined/>
-                  <div style="margin-top: 8px">Upload</div>
-                </div>
-              </a-upload>
-            </a-form-item>
-          </a-col>
         </a-row>
       </a-form>
     </a-modal>
+
     <a-modal title="Update Intern" v-model:open="isOpenUpdate" @cancel="isOpenUpdate = false">
       <template #footer>
         <a-button key="back" @click="isOpenUpdate = false">Cancel</a-button>
@@ -236,34 +227,7 @@
         </template>
       </template>
     </a-table>
-
-    <!-- Delete Confirmation Modal -->
-    <a-modal
-        v-model:open="isDeleteModalVisible"
-        title="Confirm Deletion"
-        :closable="false"
-        :maskClosable="false"
-        :width="420"
-    >
-      <template #icon>
-        <ExclamationCircleOutlined style="color: #ff4d4f; font-size: 22px; margin-right: 10px"/>
-      </template>
-      <div style="display: flex; align-items: center; margin-bottom: 16px">
-        <div
-            style="background-color: #fff2f0; border-radius: 50%; width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; margin-right: 16px">
-          <ExclamationCircleOutlined style="color: #ff4d4f; font-size: 22px"/>
-        </div>
-        <div>
-          <p style="font-size: 16px; font-weight: 500; margin-bottom: 8px">Are you sure you want to delete this
-            intern?</p>
-          <p style="color: #666; margin-bottom: 0">This action cannot be undone.</p>
-        </div>
-      </div>
-      <template #footer>
-        <a-button key="cancel" @click="cancelDelete">Cancel</a-button>
-        <a-button key="delete" danger type="primary" @click="confirmDelete">Delete</a-button>
-      </template>
-    </a-modal>
+    <DeleteModal :on-cancel="cancelDelete" :on-delete="confirmDelete" :is-delete-modal-visible="isDeleteModalVisible" message="Are you sure you want to delete this intern?"/>
   </div>
 </template>
 
@@ -272,6 +236,8 @@ import {ref, reactive, computed, onMounted, h} from "vue";
 import {useInternStore} from "@/stores/internStore";
 import {PlusOutlined, EditOutlined, DeleteOutlined, ExclamationCircleOutlined} from "@ant-design/icons-vue";
 import {useMentorStore} from "@/stores/mentorStore.js";
+import DeleteModal from "@/components/DeleteModal.vue";
+import {message} from "ant-design-vue";
 
 const columns = [
   {
@@ -305,13 +271,6 @@ const columns = [
     dataIndex: "startDate",
     key: "startDate",
     align: "center",
-  },
-  {
-    title: "Status",
-    dataIndex: "status",
-    key: "status",
-    align: "center",
-    fixed: "right",
   },
   {
     title: "Action",
@@ -519,6 +478,7 @@ const confirmDelete = async () => {
     await internStore.delete(recordToDelete.value.id);
     isDeleteModalVisible.value = false;
     recordToDelete.value = null;
+    message.success("Deleted intern successfully");
   } catch (error) {
     console.error("Error deleting intern:", error);
   }

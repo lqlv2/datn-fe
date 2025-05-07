@@ -1,258 +1,192 @@
 <template>
-  <div>
-    <h2 class="header-title">Account Management</h2>
+  <div class="account-container">
+    <div class="header-section">
+      <h2 class="header-title">Account Management</h2>
+      <a-button class="add-button" @click="showAddAccountModal">
+        <template #icon>
+          <PlusOutlined/>
+        </template>
+        Add Account
+      </a-button>
+    </div>
 
-    <a-button
-      style="
-        float: right;
-        margin-right: 16px;
-        background-color: seagreen;
-        color: white;
-      "
-      @click="showAddAccountModal"
-      >Add Account</a-button
-    >
-
-    <a-row gutter="16" style="margin-bottom: 16px">
-      <a-col span="3">
-        <a-select
-          v-model:value="proFilter.role"
-          placeholder="Role"
-          allowClear
-          style="width: 100%"
-          :dropdownStyle="{ maxHeight: '130px', overflowY: 'auto' }"
-        >
-          <a-select-option value="ADMIN">Admin</a-select-option>
-          <a-select-option value="MENTOR">Mentor</a-select-option>
-          <a-select-option value="INTERN">Intern</a-select-option>
-        </a-select>
-      </a-col>
-      <!-- Position Filter -->
-
-      <a-col span="4">
-        <a-select
-          v-model:value="proFilter.status"
-          placeholder="Status"
-          allowClear
-          style="width: 100%"
-        >
-          <a-select-option value="ACTIVE">Active</a-select-option>
-          <a-select-option value="INACTIVE">Inactive</a-select-option>
-        </a-select>
-      </a-col>
-
-      <a-col span="4">
-        <a-select
-          v-model:value="proFilter.department"
-          placeholder="Department"
-          allowClear
-          style="width: 100%"
-          :dropdownStyle="{ maxHeight: '130px', overflowY: 'auto' }"
-        >
-          <a-select-option value="DU12">DU12</a-select-option>
-          <a-select-option value="DU10">DU10</a-select-option>
-          <a-select-option value="DU32">DU32</a-select-option>
-          <a-select-option value="Edu">EDU</a-select-option>
-          <a-select-option value="Rec">REC</a-select-option>
-          <a-select-option value="C-Level">C-Level</a-select-option>
-          <a-select-option value="IT Support">IT Support</a-select-option>
-        </a-select>
-      </a-col>
-
-      <a-button type="primary" style="margin-left: 8px" @click="applyFilters"
-        >Search</a-button
-      >
-
-      <a-button style="margin-left: 8px" @click="resetFilters">Reset</a-button>
-    </a-row>
+    <a-card class="filter-card">
+      <a-row :gutter="[16, 16]" align="middle">
+        <a-col :xs="24" :sm="12" :md="8">
+          <a-input
+              v-model:value="filter.name"
+              placeholder="Search by name"
+              class="search-input"
+              allow-clear
+          >
+            <template #prefix>
+              <SearchOutlined/>
+            </template>
+          </a-input>
+        </a-col>
+        <a-col :xs="24" :sm="12" :md="4">
+          <a-button type="primary" class="search-button" @click="applyFilters">
+            Search
+          </a-button>
+        </a-col>
+      </a-row>
+    </a-card>
 
     <a-modal
-      v-model:open="addAccountModalOpen"
-      title="Add New Account"
-      @ok="submitAccount"
-      @cancel="closeAddAccountModal"
+        v-model:open="addAccountModalOpen"
+        title="Add New Account"
+        @ok="submitAccount"
+        @cancel="closeAddAccountModal"
+        class="account-modal"
+        width="600px"
     >
       <template #footer>
         <a-button key="back" @click="closeAddAccountModal">Cancel</a-button>
-        <a-button key="submit" type="primary" @click="submitAccount"
-          >Submit</a-button
-        >
+        <a-button key="submit" type="primary" @click="submitAccount">
+          Submit
+        </a-button>
       </template>
 
       <a-form layout="vertical" ref="addAccountForm" :model="AccountForm">
         <a-form-item
-          label="Full Name"
-          name="fullname"
-          :rules="[{ required: true, message: 'Please input full name' }]"
+            label="Full Name"
+            name="fullname"
+            :rules="[{ required: true, message: 'Please input full name' }]"
         >
           <a-input
-            v-model:value="AccountForm.fullname"
-            placeholder="Enter full name"
+              v-model:value="AccountForm.fullname"
+              placeholder="Enter full name"
           />
         </a-form-item>
-
-        <a-form-item
-          label="Email"
-          name="email"
-          :rules="[
+        <a-row :gutter="[16, 16]">
+          <a-col :span="12">
+            <a-form-item
+                label="Phone"
+                name="phone"
+                :rules="[{ required: true, message: 'Please input phone number' }]"
+            >
+              <a-input
+                  v-model:value="AccountForm.phone"
+                  placeholder="Enter phone number"
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item
+                label="Email"
+                name="email"
+                :rules="[
             { required: true, message: 'Please input email' },
             { type: 'email', message: 'The input is not valid E-mail' },
           ]"
-        >
-          <a-input
-            v-model:value="AccountForm.email"
-            placeholder="Enter email"
-          />
-        </a-form-item>
+            >
+              <a-input
+                  v-model:value="AccountForm.email"
+                  placeholder="Enter email"
+              />
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-row :gutter="[16, 16]">
+          <a-col :span="12">
 
-        <a-form-item
-          label="Phone"
-          name="phone"
-          :rules="[{ required: true, message: 'Please input phone number' }]"
-        >
-          <a-input
-            v-model:value="AccountForm.phone"
-            placeholder="Enter phone number"
-          />
-        </a-form-item>
+            <a-form-item label="Date of Birth" name="dob">
+              <a-date-picker
+                  v-model:value="AccountForm.dob"
+                  placeholder="Select date of birth"
+                  style="width: 100%"
+                  value-format="YYYY-MM-DD"
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item
+                label="Role"
+                name="role"
+                :rules="[{ required: true, message: 'Please select a role' }]"
+            >
+              <a-select
+                  v-model:value="AccountForm.role"
+                  placeholder="Select role"
+              >
+                <a-select-option value="2">Intern</a-select-option>
+                <a-select-option value="3">Mentor</a-select-option>
+                <a-select-option value="1">Admin</a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+        </a-row>
 
-        <a-form-item label="Date of Birth" name="dob">
-          <a-date-picker
-            v-model:value="AccountForm.dob"
-            placeholder="Select date of birth"
-            style="width: 100%"
-          />
-        </a-form-item>
-
-        <a-form-item label="Department" name="department">
-          <a-select
-            v-model:value="AccountForm.department"
-            placeholder="Select department"
-          >
-            <a-select-option value="DU12">DU12</a-select-option>
-            <a-select-option value="DU10">DU10</a-select-option>
-            <a-select-option value="DU32">DU32</a-select-option>
-            <a-select-option value="Edu">EDU</a-select-option>
-            <a-select-option value="Rec">REC</a-select-option>
-            <a-select-option value="C-Level">C-Level</a-select-option>
-            <a-select-option value="IT Support">IT Support</a-select-option>
-          </a-select>
-        </a-form-item>
-
-        <a-form-item
-          label="Role"
-          name="roleId"
-          :rules="[{ required: true, message: 'Please select a role' }]"
-        >
-          <a-select
-            v-model:value="AccountForm.roleId"
-            placeholder="Select role"
-          >
-            <a-select-option value="1">EDU</a-select-option>
-            <a-select-option value="2">COO</a-select-option>
-            <a-select-option value="3">REC</a-select-option>
-            <a-select-option value="4">INTERN</a-select-option>
-            <a-select-option value="5">MENTOR</a-select-option>
-            <a-select-option value="6">DL</a-select-option>
-            <a-select-option value="7">ADMIN</a-select-option>
-          </a-select>
-        </a-form-item>
       </a-form>
     </a-modal>
 
     <a-modal
-      v-model:open="updateAccountModalOpen"
-      title="Update Account"
-      @ok="updateAccount"
-      @cancel="closeUpdateAccountModal"
+        v-model:open="updateAccountModalOpen"
+        title="Update Account"
+        @ok="updateAccount"
+        @cancel="closeUpdateAccountModal"
+        class="account-modal"
+        width="600px"
     >
       <template #footer>
         <a-button key="back" @click="closeUpdateAccountModal">Cancel</a-button>
-        <a-button key="submit" type="primary" @click="updateAccount"
-          >Update</a-button
-        >
+        <a-button key="submit" type="primary" @click="updateAccount">
+          Update
+        </a-button>
       </template>
 
       <a-form layout="vertical" ref="updateAccountForm" :model="UpdateForm">
         <a-form-item
-          label="Full Name"
-          name="fullname"
-          :rules="[{ required: true, message: 'Please input full name' }]"
+            label="Full Name"
+            name="fullname"
+            :rules="[{ required: true, message: 'Please input full name' }]"
         >
           <a-input
-            v-model:value="UpdateForm.fullname"
-            placeholder="Enter full name"
+              v-model:value="UpdateForm.name"
+              placeholder="Enter full name"
           />
         </a-form-item>
 
         <a-form-item
-          label="Email"
-          name="email"
-          :rules="[
+            label="Email"
+            name="email"
+            :rules="[
             { required: true, message: 'Please input email' },
             { type: 'email', message: 'The input is not valid E-mail' },
           ]"
         >
-          <a-input v-model:value="UpdateForm.email" placeholder="Enter email" />
+          <a-input v-model:value="UpdateForm.email" placeholder="Enter email"/>
         </a-form-item>
 
         <a-form-item
-          label="Phone"
-          name="phone"
-          :rules="[{ required: true, message: 'Please input phone number' }]"
+            label="Phone"
+            name="phone"
+            :rules="[{ required: true, message: 'Please input phone number' }]"
         >
           <a-input
-            v-model:value="UpdateForm.phone"
-            placeholder="Enter phone number"
+              v-model:value="UpdateForm.phone"
+              placeholder="Enter phone number"
           />
         </a-form-item>
 
         <a-form-item label="Date of Birth" name="dob">
           <a-date-picker
-            v-model:value="UpdateForm.dob"
-            placeholder="Select date of birth"
-            style="width: 100%"
+              format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD"
+              v-model:value="UpdateForm.dob"
+              placeholder="Select date of birth"
+              style="width: 100%"
           />
         </a-form-item>
 
-        <a-form-item label="Department" name="department">
-          <a-select
-            v-model:value="UpdateForm.department"
-            placeholder="Select department"
-          >
-            <a-select-option value="DU12">DU12</a-select-option>
-            <a-select-option value="DU10">DU10</a-select-option>
-            <a-select-option value="DU32">DU32</a-select-option>
-            <a-select-option value="Edu">EDU</a-select-option>
-            <a-select-option value="Rec">REC</a-select-option>
-            <a-select-option value="C-Level">C-Level</a-select-option>
-            <a-select-option value="IT Support">IT Support</a-select-option>
-          </a-select>
-        </a-form-item>
-
         <a-form-item
-          label="Role"
-          name="roleId"
-          :rules="[{ required: true, message: 'Please select a role' }]"
+            label="Role"
+            name="role"
         >
-          <a-select v-model:value="UpdateForm.roleId" placeholder="Select role">
-            <a-select-option :value="1">EDU</a-select-option>
-            <a-select-option :value="2">COO</a-select-option>
-            <a-select-option :value="3">REC</a-select-option>
-            <a-select-option :value="4">INTERN</a-select-option>
-            <a-select-option :value="5">MENTOR</a-select-option>
-            <a-select-option :value="6">DL</a-select-option>
-            <a-select-option :value="7">ADMIN</a-select-option>
-          </a-select>
-        </a-form-item>
-
-        <a-form-item label="Status" name="status">
-          <a-select
-            v-model:value="UpdateForm.status"
-            placeholder="Select status"
-          >
-            <a-select-option value="ACTIVE">Active</a-select-option>
-            <a-select-option value="INACTIVE">Inactive</a-select-option>
+          <a-select v-model:value="UpdateForm.role" placeholder="Select role" :default-value="UpdateForm.role" disabled>
+            <a-select-option value="2">Intern</a-select-option>
+            <a-select-option value="3">Mentor</a-select-option>
+            <a-select-option value="1">Admin</a-select-option>
           </a-select>
         </a-form-item>
       </a-form>
@@ -261,127 +195,121 @@
     <!-- Account Table ===============================-->
 
     <a-table
-      :data-source="accounts"
-      :pagination="pagination"
-      @change="handlePaginationChange"
-      bordered
-      row-key="id"
-      :scroll="{ x: 1500, y: 500 }"
+        :data-source="accounts"
+        :pagination="pagination"
+        @change="handlePaginationChange"
+        bordered
+        row-key="id"
+        :scroll="{ x: 1500, y: 500 }"
+        class="accounts-table"
     >
       <a-table-column
-        title="#"
-        :dataIndex="'id'"
-        :width="50"
-        fixed="left"
-        align="center"
+          title="#"
+          data-index="id"
+          :width="50"
+          fixed="left"
+          align="center"
       />
 
       <!-- Name Column -->
       <a-table-column
-        title="Name"
-        :dataIndex="'fullname'"
-        :width="130"
-        align="center"
+          title="Name"
+          data-index="fullname"
+          :width="130"
+          align="center"
+          :sorter="(a, b) => a.fullname.localeCompare(b.fullname)"
       />
 
-      <!-- Description Column -->
+      <!-- Email Column -->
       <a-table-column
-        title="Email"
-        :dataIndex="'email'"
-        :width="150"
-        align="center"
+          title="Email"
+          data-index="email"
+          :width="150"
+          align="center"
+          :sorter="(a, b) => a.email.localeCompare(b.email)"
       />
 
-      <!-- Description Column -->
+      <!-- Phone Column -->
       <a-table-column
-        title="Phone"
-        :dataIndex="'phone'"
-        :width="100"
-        align="center"
+          title="Phone"
+          data-index="phone"
+          :width="100"
+          align="center"
       />
 
+      <!-- Role Column -->
       <a-table-column
-        title="Role"
-        :dataIndex="'role'"
-        :width="70"
-        align="center"
-      />
+          title="Role"
+          data-index="role"
+          :width="70"
+          align="center"
+          :sorter="(a, b) => a.role - b.role"
+      >
+        <template #default="{ text }">
+          <a-tag :color="getRoleColor(text)">
+            {{ ROLES[text] || text }}
+          </a-tag>
+        </template>
+      </a-table-column>
 
-      <a-table-column
-        title="Department"
-        :dataIndex="'department'"
-        :width="70"
-        align="center"
-      />
-
-      <!-- Status Column -->
-      <a-table-column
-        title="Status"
-        :dataIndex="'status'"
-        :width="130"
-        align="center"
-      />
-
+      <!-- Actions Column -->
       <a-table-column title="Actions" align="center" :width="100" fixed="right">
-        <template v-slot="record">
-          <a-button
-            @click="showUpdateAccountModal(record)"
-            type="text"
-            style="
-              padding: 2px;
-              min-width: auto;
-              height: auto;
-              margin-left: 7px;
-            "
-          >
-            <img
-              src="@/assets/edit.png"
-              alt="Edit"
-              style="width: 15px; height: 15px"
-            />
-          </a-button>
-          <a-button
-            @click="showDeleteAccountModal(record)"
-            type="text"
-            style="
-              padding: 2px;
-              min-width: auto;
-              height: auto;
-              margin-left: 7px;
-            "
-          >
-            <img
-              src="@/assets/delete.png"
-              alt="Delete"
-              style="width: 15px; height: 15px"
-          /></a-button>
+        <template #default="{ record }">
+          <a-tooltip title="Edit">
+            <a-button
+                class="action-button"
+                @click="showUpdateAccountModal(record)"
+                type="text"
+            >
+              <EditOutlined/>
+            </a-button>
+          </a-tooltip>
+          <a-tooltip title="Delete">
+            <a-button
+                class="action-button"
+                @click="showDeleteAccountModal(record)"
+                type="text"
+            >
+              <DeleteOutlined/>
+            </a-button>
+          </a-tooltip>
         </template>
       </a-table-column>
     </a-table>
 
     <a-modal
-      v-model:visible="isDeleteModalVisible"
-      title="Delete Account"
-      @ok="handleDelete"
-      @cancel="handleCancel"
-      :ok-button-props="{ type: 'primary' }"
+        v-model:visible="isDeleteModalVisible"
+        title="Delete Account"
+        @ok="handleDelete"
+        @cancel="handleCancel"
+        :ok-button-props="{ type: 'danger' }"
+        class="delete-modal"
     >
-      <p>
-        Are you sure you want to permanently delete your account? This action
-        cannot be undone.
-      </p>
+      <div class="delete-confirmation">
+        <ExclamationCircleOutlined class="warning-icon"/>
+        <p>
+          Are you sure you want to permanently delete this account? This action cannot be undone.
+        </p>
+      </div>
     </a-modal>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from "vue";
-import { useAccountStore } from "@/stores/accountStore";
-import { message, Modal } from "ant-design-vue";
+import {ref, reactive, computed, onMounted} from "vue";
+import {useAccountStore} from "@/stores/accountStore";
+import {message, Modal} from "ant-design-vue";
+import {
+  PlusOutlined,
+  SearchOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  ExclamationCircleOutlined
+} from '@ant-design/icons-vue';
 
 const accountStore = useAccountStore();
 
-const { list, add, update, deleteAcc, setSelectedAccount } = accountStore;
+const {list, add, update, deleteAcc, setSelectedAccount} = accountStore;
 
 const accounts = computed(() => accountStore.accounts);
 const currentPage = computed(() => accountStore.currentPage);
@@ -392,26 +320,19 @@ const addAccountModalOpen = ref(false);
 const updateAccountForm = ref(null);
 const updateAccountModalOpen = ref(false);
 const isDeleteModalVisible = ref(false); // Controls modal visibility
-const isCheckboxChecked = ref(false); // Tracks if the checkbox is checked
 
-const proFilter = reactive({
-  role: null,
-  department: null,
-  status: null,
+const ROLES = {
+  '1': 'Admin',
+  '2': 'Intern',
+  '3': 'Mentor'
+};
+
+const filter = reactive({
+  name: ''
 });
 
 const applyFilters = () => {
-  accountStore.filters = { ...proFilter };
-  console.log(proFilter);
-  console.log("Applied Filters:", accountStore.filters);
-  list(1, pagination.pageSize, accountStore.filters);
-};
-
-const resetFilters = () => {
-  proFilter.role = null;
-  proFilter.department = null;
-  proFilter.status = null;
-  accountStore.filters = { ...proFilter };
+  accountStore.filters = {...filter};
   list(1, pagination.pageSize, accountStore.filters);
 };
 
@@ -425,20 +346,21 @@ const pagination = reactive({
 });
 
 const AccountForm = reactive({
+  id: null,
   name: null,
   email: null,
   phone: null,
-  roleId: null,
-  department: null,
+  role: null,
+  dob: null,
 });
 
 const UpdateForm = reactive({
+  id: null,
   name: null,
   email: null,
   phone: null,
-  roleId: null,
-  department: null,
-  status: null,
+  role: null,
+  dob: null,
 });
 
 const handlePaginationChange = (paginationConfig) => {
@@ -457,7 +379,6 @@ const closeAddAccountModal = () => {
 
 const showUpdateAccountModal = (account) => {
   console.log(account.value);
-  setSelectedAccount(account.value);
   Object.assign(UpdateForm, account.value);
   updateAccountModalOpen.value = true;
 };
@@ -468,22 +389,15 @@ const closeUpdateAccountModal = () => {
 };
 
 const submitAccount = async () => {
-  // Trigger frontend validation first
   const isValid = await addAccountForm.value?.validate();
   if (!isValid) {
-    // If validation fails, Ant Design automatically shows error messages for each invalid field
-    return; // No need to proceed with API call
+    return;
   }
-
   try {
-    // If validation passes, proceed with the backend API call
-    await add(AccountForm); // Replace with your API call
-
-    // Reset form and close modal after successful submission
+    await add(AccountForm);
     addAccountForm.value?.resetFields();
     addAccountModalOpen.value = false;
   } catch (error) {
-    // Handle backend errors (if any)
     const errorMessage = error.message || "An unexpected error occurred!";
     showErrorModal(errorMessage);
   }
@@ -491,20 +405,15 @@ const submitAccount = async () => {
 
 const updateAccount = async () => {
   const isValid = await updateAccountForm.value?.validate();
-
   if (!isValid) {
-    // If validation fails, Ant Design automatically shows error messages for each invalid field
-    return; // No need to proceed with API call
+    return;
   }
-
   try {
-    console.log(selectedAccount);
-    await update(selectedAccount.value.id, UpdateForm);
+    await update(UpdateForm.id, UpdateForm);
     message.success("Account updated successfully!");
     updateAccountForm.value?.resetFields();
     updateAccountModalOpen.value = false;
   } catch (error) {
-    // Display error message from the backend response
     const errorMessage = error.message || "An unexpected error occurred!";
     showErrorModal(errorMessage);
   }
@@ -532,13 +441,355 @@ const handleCancel = () => {
   isDeleteModalVisible.value = false;
 };
 
+const getRoleColor = (role) => {
+  switch (role) {
+    case '1':
+      return 'blue'; // Admin
+    case '2':
+      return 'green'; // Intern
+    case '3':
+      return 'purple'; // Mentor
+    default:
+      return 'gray';
+  }
+};
+
 onMounted(async () => {
   await list();
 });
 </script>
 
 <style scoped>
+.account-container {
+  padding: 24px;
+  background-color: #f5f7fa;
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 0 8px;
+}
+
 .header-title {
-  margin-left: 5px;
+  margin: 0;
+  color: #101828;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.add-button {
+  background: linear-gradient(90deg, #2e7d32 0%, #4caf50 100%);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 500;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.add-button:hover {
+  background: linear-gradient(90deg, #388e3c, #66bb6a);
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.add-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+}
+
+.filter-card {
+  margin-bottom: 24px;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid #e8ecef;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.search-input {
+  border-radius: 8px;
+  border: 1px solid #d0d5dd;
+  transition: all 0.2s ease;
+}
+
+.search-input:hover {
+  border-color: #4caf50;
+}
+
+.search-input:focus {
+  border-color: #4caf50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.search-button {
+  background: #1976d2;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 24px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.search-button:hover {
+  background: #1565c0;
+}
+
+.search-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.2);
+}
+
+.accounts-table {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e8ecef;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+:deep(.ant-table) {
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+:deep(.ant-table-thead > tr > th) {
+  background: #f8fafc;
+  color: #344054;
+  font-weight: 600;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e8ecef;
+}
+
+:deep(.ant-table-tbody > tr > td) {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f3f5;
+  color: #1f2a44;
+  transition: background-color 0.2s ease;
+}
+
+:deep(.ant-table-tbody > tr:hover > td) {
+  background: #f9fafb;
+}
+
+.action-button {
+  padding: 4px;
+  min-width: 32px;
+  height: 32px;
+  margin: 0 4px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.action-button:hover {
+  background: #f5f7fa;
+  color: #1976d2;
+}
+
+.account-modal :deep(.ant-modal-content) {
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+.account-modal :deep(.ant-modal-header) {
+  border-radius: 12px 12px 0 0;
+  background: #f8fafc;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e8ecef;
+}
+
+.account-modal :deep(.ant-modal-title) {
+  font-size: 20px;
+  font-weight: 600;
+  color: #101828;
+}
+
+.account-modal :deep(.ant-modal-body) {
+  padding: 24px;
+  background: #ffffff;
+}
+
+.account-modal :deep(.ant-modal-footer) {
+  border-radius: 0 0 12px 12px;
+  padding: 16px 24px;
+  border-top: 1px solid #e8ecef;
+  background: #ffffff;
+}
+
+.delete-modal :deep(.ant-modal-content) {
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+.delete-confirmation {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.warning-icon {
+  font-size: 28px;
+  color: #d32f2f;
+}
+
+:deep(.ant-form-item-label > label) {
+  font-weight: 500;
+  color: #344054;
+}
+
+:deep(.ant-input),
+:deep(.ant-select-selector),
+:deep(.ant-picker) {
+  border-radius: 8px;
+  border: 1px solid #d0d5dd;
+  transition: all 0.2s ease;
+}
+
+:deep(.ant-input:hover),
+:deep(.ant-select-selector:hover),
+:deep(.ant-picker:hover) {
+  border-color: #4caf50;
+}
+
+:deep(.ant-input:focus),
+:deep(.ant-select-selector:focus),
+:deep(.ant-picker:focus) {
+  border-color: #4caf50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+:deep(.ant-pagination) {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+:deep(.ant-pagination-item) {
+  border-radius: 6px;
+  border: 1px solid #d0d5dd;
+  margin: 0 4px;
+  transition: all 0.2s ease;
+}
+
+:deep(.ant-pagination-item:hover) {
+  border-color: #4caf50;
+  background: #f9fafb;
+}
+
+:deep(.ant-pagination-item-active) {
+  border-color: #4caf50;
+  background: #4caf50;
+}
+
+:deep(.ant-pagination-item-active a) {
+  color: #ffffff;
+}
+
+:deep(.ant-pagination-prev),
+:deep(.ant-pagination-next) {
+  border-radius: 6px;
+  border: 1px solid #d0d5dd;
+}
+
+:deep(.ant-pagination-prev:hover),
+:deep(.ant-pagination-next:hover) {
+  border-color: #4caf50;
+  background: #f9fafb;
+}
+
+:deep(.ant-btn) {
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 500;
+}
+
+:deep(.ant-btn-primary) {
+  background: #1976d2;
+  border: none;
+}
+
+:deep(.ant-btn-primary:hover) {
+  background: #1565c0;
+}
+
+:deep(.ant-btn-danger) {
+  background: #d32f2f;
+  border: none;
+}
+
+:deep(.ant-btn-danger:hover) {
+  background: #b71c1c;
+}
+
+@media (max-width: 768px) {
+  .account-container {
+    padding: 16px;
+  }
+
+  .header-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .header-title {
+    font-size: 24px;
+  }
+
+  .add-button {
+    align-self: flex-end;
+    width: 100%;
+    max-width: 200px;
+  }
+
+  .filter-card {
+    padding: 12px;
+  }
+
+  .search-button {
+    width: 100%;
+  }
+
+  :deep(.ant-table) {
+    font-size: 13px;
+  }
+
+  :deep(.ant-table-thead > tr > th),
+  :deep(.ant-table-tbody > tr > td) {
+    padding: 10px 12px;
+  }
+
+  .account-modal :deep(.ant-modal-body) {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 576px) {
+  .header-title {
+    font-size: 20px;
+  }
+
+  :deep(.ant-form-item) {
+    margin-bottom: 16px;
+  }
+
+  .delete-confirmation {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .warning-icon {
+    margin-bottom: 8px;
+  }
 }
 </style>
