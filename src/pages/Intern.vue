@@ -13,19 +13,6 @@
         </a-select>
       </a-col>
 
-      <!-- Status Filter -->
-      <a-col span="6">
-        <a-select v-model:value="filters.status" placeholder="Status" allowClear style="width: 100%"
-                  :dropdownStyle="{ maxHeight: '130px', overflowY: 'auto' }">
-          <a-select-option value="ONBOARD">Onboard</a-select-option>
-          <a-select-option value="FINISH_ONBOARD">Onboard Finished</a-select-option>
-          <a-select-option value="OJT">OJT</a-select-option>
-          <a-select-option value="FINISH_OJT">OJT Finished</a-select-option>
-          <a-select-option value="TERMINATED">Terminated</a-select-option>
-          <a-select-option value="COMPLETED">Completed</a-select-option>
-        </a-select>
-      </a-col>
-
       <!-- Start Date Filter -->
       <a-col span="6">
         <a-date-picker v-model:value="filters.startDate" placeholder="Start Date" style="width: 100%"/>
@@ -35,12 +22,11 @@
       <a-col span="6">
         <a-date-picker v-model:value="filters.endDate" placeholder="End Date" style="width: 100%"/>
       </a-col>
+      <a-button type="primary" style="margin-left: 8px" @click="applyFilters">Search</a-button>
+      <a-button style="margin-left: 8px" @click="resetFilters">Reset</a-button>
     </a-row>
 
     <!-- Apply Filters Button -->
-    <a-button type="primary" style="margin-left: 8px" @click="applyFilters">Search
-    </a-button>
-    <a-button style="margin-left: 8px" @click="resetFilters">Reset</a-button>
     <a-button style="
         float: right;
         margin-right: 8px;
@@ -110,11 +96,11 @@
               </a-select>
             </a-form-item>
           </a-col>
-            <a-col :span="12">
+          <a-col :span="12">
             <a-form-item style="width: 90%" label="Mentor" name="mentor">
-              <a-select v-model:value="form.position" placeholder="Select position">
-                <a-select-option v-for="pos in positions" :key="pos" :value="pos">
-                  {{ pos }}
+              <a-select v-model:value="form.mentorId" placeholder="Select position">
+                <a-select-option v-for="pos in mentors" :key="pos.id" :value="pos.id">
+                  {{ pos.fullname }}
                 </a-select-option>
               </a-select>
             </a-form-item>
@@ -131,10 +117,16 @@
       <a-form layout="vertical" ref="updateInternForm" :model="updateform">
         <!-- Full Name and Email -->
         <a-row :gutter="16">
-          <a-col :span="24">
+          <a-col :span="12">
             <a-form-item style="width: 90%" label="Full Name" name="fullname"
                          :rules="[{ required: true, message: 'Please input name' }]">
               <a-input v-model:value="updateform.fullname" placeholder="Enter full name"/>
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item style="width: 90%" label="Email" name="email"
+                         :rules="[{ required: true, message: 'Please input email' }]">
+              <a-input v-model:value="updateform.email" placeholder="Enter email"/>
             </a-form-item>
           </a-col>
         </a-row>
@@ -142,15 +134,15 @@
         <!-- Phone and Date of Birth -->
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item style="width: 90%" label="Email" name="email"
-                         :rules="[{ required: true, message: 'Please input email' }]">
-              <a-input v-model:value="updateform.email" placeholder="Enter email"/>
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
             <a-form-item style="width: 90%" label="Phone" name="phone"
                          :rules="[{ required: true, message: 'Please input phone' }]">
               <a-input v-model:value="updateform.phone" placeholder="Enter phone number"/>
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="Date of Birth" name="dob">
+              <a-date-picker v-model:value="updateform.dob" value-format="YYYY-MM-DD" format="YYYY-MM-DD"
+                             style="width: 100%" placeholder="Select date of birth"/>
             </a-form-item>
           </a-col>
         </a-row>
@@ -219,15 +211,9 @@
         :row-class-name="(_record, index) => (index % 2 === 0 ? 'table-row-light' : 'table-row-dark')"
         class="custom-table"
     >
-      <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'status'">
-          <a-tag :color="getStatusColor(record.status)">
-            {{ formatStatus(record.status) }}
-          </a-tag>
-        </template>
-      </template>
     </a-table>
-    <DeleteModal :on-cancel="cancelDelete" :on-delete="confirmDelete" :is-delete-modal-visible="isDeleteModalVisible" message="Are you sure you want to delete this intern?"/>
+    <DeleteModal :on-cancel="cancelDelete" :on-delete="confirmDelete" :is-delete-modal-visible="isDeleteModalVisible"
+                 message="Are you sure you want to delete this intern?"/>
   </div>
 </template>
 
@@ -270,6 +256,12 @@ const columns = [
     title: "Start Date",
     dataIndex: "startDate",
     key: "startDate",
+    align: "center",
+  },
+  {
+    title: "End Date",
+    dataIndex: "endDate",
+    key: "endDate",
     align: "center",
   },
   {
@@ -327,6 +319,7 @@ const form = reactive({
   endDate: null,
   position: null,
   image: "",
+  mentorId: null,
 });
 
 const updateform = reactive({
@@ -425,12 +418,9 @@ const handleSubmit = async () => {
   addInternForm.value
       .validate()
       .then(async () => {
-        console.log(form.image);
         await add(form);
-        if (selectedFile.value != null) {
-          await uploadImage(form.phone, selectedFile.value);
-        }
         open.value = false;
+        message.success("Added new intern successfully");
       })
       .catch((error) => {
         console.log("Form invalid:", error);

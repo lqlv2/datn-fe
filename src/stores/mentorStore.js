@@ -9,6 +9,7 @@ import {
   listUnassignedInterns,
   toggleOpenStatus,
 } from '@/services/mentorService';
+import {message} from "ant-design-vue";
 
 export const useMentorStore = defineStore('mentorStore', {
   state: () => ({
@@ -46,8 +47,10 @@ export const useMentorStore = defineStore('mentorStore', {
         await deleteMentor(id);
         this.mentors = this.mentors.filter((mentor) => mentor.id !== id);
         console.log(`Deleted mentor with ID ${id}.`);
+        message.success("Deleted mentor successfully");
       } catch (error) {
         console.error('Failed to delete mentor:', error);
+        message.error(error?.message);
       }
     },
 

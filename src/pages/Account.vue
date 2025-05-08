@@ -108,6 +108,7 @@
               <a-select
                   v-model:value="AccountForm.role"
                   placeholder="Select role"
+                  disabled
               >
                 <a-select-option value="2">Intern</a-select-option>
                 <a-select-option value="3">Mentor</a-select-option>
@@ -142,7 +143,7 @@
             :rules="[{ required: true, message: 'Please input full name' }]"
         >
           <a-input
-              v-model:value="UpdateForm.name"
+              v-model:value="UpdateForm.fullname"
               placeholder="Enter full name"
           />
         </a-form-item>
@@ -350,7 +351,7 @@ const AccountForm = reactive({
   name: null,
   email: null,
   phone: null,
-  role: null,
+  role: "1",
   dob: null,
 });
 
@@ -378,8 +379,7 @@ const closeAddAccountModal = () => {
 };
 
 const showUpdateAccountModal = (account) => {
-  console.log(account.value);
-  Object.assign(UpdateForm, account.value);
+  Object.assign(UpdateForm, account);
   updateAccountModalOpen.value = true;
 };
 

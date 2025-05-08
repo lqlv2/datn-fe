@@ -32,7 +32,7 @@
         <template #action="{ record }">
           <a-space>
             <a-button type="link" @click="viewEvaluation(record)">
-              <eye-outlined /> View
+              <eye-outlined />
             </a-button>
           </a-space>
         </template>
@@ -73,6 +73,7 @@ import {
 } from '@ant-design/icons-vue';
 import { message } from 'ant-design-vue';
 import axiosInstance from "@/plugins/axios.js";
+import {useRouter} from "vue-router";
 
 // Mock Data
 const dataSource = ref([
@@ -113,7 +114,6 @@ const dataSource = ref([
   },
 ]);
 
-// Table Columns
 const columns = [
   {
     title: 'Intern Name',
@@ -222,15 +222,10 @@ const handleAddEvaluation = async () => {
     confirmLoading.value = false;
   }
 };
+const router = useRouter();
 
 const viewEvaluation = (record) => {
-  message.info(`Viewing evaluation for ${record.name}`);
-  // Add navigation or modal logic here
-};
-
-const editEvaluation = (record) => {
-  message.info(`Editing evaluation for ${record.name}`);
-  // Add edit modal or navigation logic here
+  router.push('/evaluation/' + record.internId);
 };
 
 const getStatusColor = (status) => {

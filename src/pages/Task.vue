@@ -83,38 +83,12 @@
 
       <a-table-column title="Actions" align="center" fixed="right" :width="200">
         <template #default="{ record }">
-          <a-button
-              @click="editTask(record)"
-              type="text"
-              style="
-              padding: 2px;
-              min-width: auto;
-              height: auto;
-              margin-left: 7px;
-            "
-          >
-            Detail
+          <a-button type="link" @click="editTask(record)">
+            <eye-outlined />
           </a-button>
         </template>
       </a-table-column>
     </a-table>
-
-<!--    <a-modal v-model:open="isModalOpen" title="Assign Tasks" @ok="handleAssignTask" class="modal-1000px">-->
-<!--      <a-select-->
-<!--          v-model:value="selectedIntern"-->
-<!--          placeholder="Select Intern"-->
-<!--          style="width: 100%"-->
-<!--          mode="multiple"-->
-<!--      >-->
-<!--        <a-select-option-->
-<!--            v-for="intern in internsOfProject"-->
-<!--            :key="intern.id"-->
-<!--            :value="intern.id"-->
-<!--        >-->
-<!--          {{ intern.fullname }}-->
-<!--        </a-select-option>-->
-<!--      </a-select>-->
-<!--    </a-modal>-->
 
     <a-modal
         v-model:open="isAddTaskModalOpen"
@@ -195,6 +169,7 @@ import {useTaskStore} from "@/stores/taskStore";
 import {useProjectStore} from "@/stores/projectStore";
 import {useRouter} from "vue-router";
 import {QuillEditor} from "@vueup/vue-quill";
+import {EditOutlined, EyeOutlined} from "@ant-design/icons-vue";
 
 const quillEditorRef = ref(null);
 const quillEditTaskRef = ref(null);
@@ -268,7 +243,6 @@ const showModal = async (record) => {
 };
 
 
-
 const handleAssignTask = async () => {
 
   await taskStore.assignTask(selectedTask.value.id, Object.values(selectedIntern.value));
@@ -283,7 +257,7 @@ const handleAddTask = async () => {
   fetchTasks(currentPage.value, pagination.pageSize, taskStore.status);
   isAddTaskModalOpen.value = false;
   console.log(task);
-  task.id &&  await router.push(`/mentor/task/${task.id}`);
+  task.id && await router.push(`/mentor/task/${task.id}`);
 };
 
 onMounted(fetchTasks);
