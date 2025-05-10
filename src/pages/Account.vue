@@ -193,7 +193,6 @@
       </a-form>
     </a-modal>
 
-    <!-- Account Table ===============================-->
 
     <a-table
         :data-source="accounts"
@@ -341,9 +340,6 @@ const pagination = reactive({
   current: currentPage,
   pageSize: 10,
   total: totalElements,
-  pageSizeOptions: ["10", "20", "30"],
-  showSizeChanger: true,
-  showQuickJumper: true,
 });
 
 const AccountForm = reactive({

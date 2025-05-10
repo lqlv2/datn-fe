@@ -1,9 +1,9 @@
 <template>
-  <div class="container mx-auto p-4">
-    <a-card title="Intern Evaluation Details" class="mb-4">
+  <div class="evaluation-container">
+    <a-card title="Intern Evaluation Details" class="evaluation-card">
 
       <!-- Evaluation Summary -->
-      <a-descriptions title="Evaluation Summary" bordered :column="2" class="mb-6">
+      <a-descriptions title="Evaluation Summary" bordered :column="2" class="evaluation-summary mb-6">
         <a-descriptions-item label="Intern Name">
           {{ formData.internName }}
         </a-descriptions-item>
@@ -11,7 +11,7 @@
           {{ formData.mentorName }}
         </a-descriptions-item>
         <a-descriptions-item label="Overall Score">
-          <span v-if="String(formData.averageScore) !== '-1'">
+          <span v-if="String(formData.averageScore) !== '-1'" class="score-value">
             {{ formData.averageScore }}/10
           </span>
           <a-tag v-else color="gray">N/A</a-tag>
@@ -20,7 +20,7 @@
           {{ formData.mentorName }}
         </a-descriptions-item>
         <a-descriptions-item label="Overall">
-          <a-tag v-if="formData.overall" :color="getStatusColor(formData.overall)">
+          <a-tag v-if="formData.overall" :color="getStatusColor(formData.overall)" class="status-tag">
             {{ formData.overall.toUpperCase() }}
           </a-tag>
           <a-tag v-else color="gray">N/A</a-tag>
@@ -32,61 +32,69 @@
       </a-descriptions>
 
       <!-- Evaluation Criteria -->
-      <a-card title="Evaluation Criteria" class="mb-4">
+      <a-card title="Evaluation Criteria" class="criteria-card">
         <a-table
             :columns="criteriaColumns"
             :data-source="Object.values(criteriaList)"
             :pagination="false"
             row-key="criterion"
+            class="criteria-table"
         >
           <template #criteria="{ text }">
-            <a-form-item :label="text" required/>
+            <a-form-item :label="text" required class="criteria-label"/>
           </template>
-          <template #score="{ record, text }">
-            <a-input-number v-model:value="criteriaList[record.id].score"></a-input-number>
-            /10
+          <template #score="{ record }">
+            <div class="score-input-container">
+              <a-input-number v-model:value="criteriaList[record.id].score"
+                            :disabled="getCurrentUserRole() !== ROLES.MENTOR"
+                            class="score-input"></a-input-number>
+              <span class="score-max">/10</span>
+            </div>
           </template>
-          <template #comments="{ text, record }">
-            <a-textarea v-model:value="criteriaList[record.id].comment"></a-textarea>
+          <template #comments="{record }">
+            <a-textarea v-model:value="criteriaList[record.id].comment"
+                        :disabled="getCurrentUserRole() !== ROLES.MENTOR"
+                        class="comment-textarea"></a-textarea>
           </template>
         </a-table>
-        <a-divider/>
-        <a-form-item label="Overall Assessment" style="margin-top: 12px; margin-bottom: 0;" required>
+        <a-divider class="criteria-divider"/>
+        <a-form-item label="Overall Assessment" class="overall-assessment" required>
           <a-select
               v-model:value="formData.overall"
               placeholder="Select status"
-              style="width: 100%; font-size: 14px; border: 1px solid #d1d5db; border-radius: 4px; transition: border-color 0.2s, box-shadow 0.2s;"
+              class="overall-select"
+              :disabled="getCurrentUserRole() !== ROLES.MENTOR"
           >
             <a-select-option value="Excellent">
-            <span style="display: flex; align-items: center; gap: 4px;">
-              <trophy-outlined style="font-size: 14px; color: #f59e0b;"/>
+            <span class="assessment-option">
+              <trophy-outlined class="assessment-icon excellent-icon"/>
               Excellent
             </span>
             </a-select-option>
             <a-select-option value="Good">
-            <span style="display: flex; align-items: center; gap: 4px;">
-              <like-outlined style="font-size: 14px; color: #10b981;"/>
+            <span class="assessment-option">
+              <like-outlined class="assessment-icon good-icon"/>
               Good
             </span>
             </a-select-option>
             <a-select-option value="Average">
-            <span style="display: flex; align-items: center; gap: 4px;">
-              <dashboard-outlined style="font-size: 14px; color: #6b7280;"/>
+            <span class="assessment-option">
+              <dashboard-outlined class="assessment-icon average-icon"/>
               Average
             </span>
             </a-select-option>
             <a-select-option value="Poor">
-            <span style="display: flex; align-items: center; gap: 4px;">
-              <warning-outlined style="font-size: 14px; color: #ef4444;"/>
+            <span class="assessment-option">
+              <warning-outlined class="assessment-icon poor-icon"/>
               Poor
             </span>
             </a-select-option>
           </a-select>
         </a-form-item>
-        <a-divider/>
+        <a-divider class="criteria-divider"/>
         <a-row justify="end">
-          <a-col>
-            <a-button type="primary" @click="handleEditEvaluation">
+          <a-col v-if="getCurrentUserRole() === ROLES.MENTOR">
+            <a-button type="primary" @click="handleEditEvaluation" class="edit-button">
               Edit Evaluation
             </a-button>
           </a-col>
@@ -97,43 +105,17 @@
 </template>
 
 <script setup>
-import {ref, computed, onMounted} from 'vue';
-import {useRouter, useRoute} from 'vue-router';
+import {onMounted, ref} from 'vue';
+import {useRoute} from 'vue-router';
 import {message} from 'ant-design-vue';
-import {
-  TrophyOutlined,
-  LikeOutlined,
-  DashboardOutlined,
-  WarningOutlined
-} from '@ant-design/icons-vue';
+import {DashboardOutlined, LikeOutlined, TrophyOutlined, WarningOutlined} from '@ant-design/icons-vue';
 import axiosInstance from "@/plugins/axios.js";
+import {getCurrentUserRole, ROLES} from "@/util/Functions.js";
 
-const editModalVisible = ref(false);
 const confirmLoading = ref(false);
 
 // Router
-const router = useRouter();
 const route = useRoute();
-
-
-const internId = ref(route.params.id);
-
-const evaluation = ref({
-  id: 1,
-  name: 'John Doe',
-  project: 'Web Development',
-  score: 85,
-  status: 'Excellent',
-  evaluator: 'Sarah Connor',
-  date: '2025-04-15',
-  criteriaList: [
-    {criteria: 'Technical Skills', score: 18, comment: 'Strong coding skills, quick to learn frameworks.'},
-    {criteria: 'Communication', score: 16, comment: 'Clear in meetings, needs slight improvement in written reports.'},
-    {criteria: 'Teamwork', score: 17, comment: 'Collaborates well with peers.'},
-    {criteria: 'Problem-Solving', score: 19, comment: 'Innovative solutions to complex issues.'},
-    {criteria: 'Initiative', score: 15, comment: ''},
-  ],
-});
 const criteriaList = ref({
   'technicalSkills': {
     id: 'technicalSkills',
@@ -194,31 +176,30 @@ const formData = ref({
 })
 
 onMounted(() => {
-  axiosInstance.get(`/admin/evaluation?internId=${route.params.id}`)
-      .then((response) => {
-        formData.value = response.data.data[0];
-      })
-      .catch((error) => {
-        console.error('Error fetching evaluation:', error);
-        message.error('Failed to fetch evaluation');
-      });
+  fetchEvaluationDetails(route.params.id);
 })
 
-// Form State for Editing
-const formState = ref({...evaluation.value});
-
-const overallScore = computed(() => {
-  return formState.value.criteria.reduce((sum, crit) => sum + crit.score, 0);
-});
-
-// Methods
-const goBack = () => {
-  router.push('/evaluations'); // Adjust route as needed
+const fetchEvaluationDetails = async (internId) => {
+  axiosInstance.get(`/admin/evaluation?internId=${internId}`)
+      .then((response) => {
+        formData.value = response.data.data[0];
+        response.data.data[0].evaluationCriteriaList && response.data.data[0].evaluationCriteriaList.forEach((item) => {
+          criteriaList.value[criteriaMap[item.criteriaName]].score = item.score;
+          criteriaList.value[criteriaMap[item.criteriaName]].comment = item.comment;
+        });
+      }).catch((error) => {
+    console.error('Error fetching evaluation:', error);
+    message.error('Failed to fetch evaluation');
+  });
 };
 
-const showEditModal = () => {
-  console.log(criteriaList.value);
-};
+const criteriaMap = {
+  "Technical Skills": "technicalSkills",
+  "Communication": "communication",
+  "Teamwork": "teamwork",
+  "Problem-Solving": "problemSolving",
+  "Initiative": "initiative",
+}
 
 const handleEditEvaluation = async () => {
   try {
@@ -234,14 +215,11 @@ const handleEditEvaluation = async () => {
       console.error('Error updating evaluation:', error);
       message.error('Failed to update evaluation');
     });
-
-    message.success('Evaluation updated successfully');
-    // editModalVisible.value = false;
-    // confirmLoading.value = false;
-    // formRef.value.resetFields();
   } catch (error) {
     message.error('Please fill in all required fields');
     confirmLoading.value = false;
+  } finally {
+    setTimeout(() => fetchEvaluationDetails(route.params.id), 2000);
   }
 };
 
@@ -267,71 +245,154 @@ const getStatusColor = (status) => {
   @apply max-w-7xl;
 }
 
-/* Ant Design Vue overrides */
-:deep(.ant-card) {
-  @apply shadow-lg rounded-lg;
+/* Enhanced styling */
+.evaluation-container {
+  @apply max-w-7xl mx-auto p-4;
+  background-color: #f9fafb;
+  min-height: calc(100vh - 64px);
 }
 
-:deep(.ant-table) {
-  @apply bg-white rounded-lg;
-}
-
-:deep(.ant-btn-link) {
-  @apply text-blue-600 hover:text-blue-800;
-}
-
-:deep(.ant-progress) {
-  @apply w-full;
-}
-
-:deep(.evaluation-modal .ant-modal-content) {
-  border-radius: 12px;
+.evaluation-card {
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   overflow: hidden;
 }
 
-:deep(.evaluation-modal .ant-modal-header) {
-  padding: 16px 24px;
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #eaeaea;
+.evaluation-summary :deep(.ant-descriptions-header) {
+  margin-bottom: 16px;
 }
 
-:deep(.evaluation-modal .ant-modal-title) {
+.evaluation-summary :deep(.ant-descriptions-title) {
   font-size: 18px;
   font-weight: 600;
+  color: #1f2937;
 }
 
-.criteria-section {
-  background-color: #f9f9f9;
+.evaluation-summary :deep(.ant-descriptions-item-label) {
+  font-weight: 500;
+  background-color: #f3f4f6;
+}
+
+.score-value {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.status-tag {
+  font-weight: 500;
+  padding: 2px 8px;
+}
+
+.criteria-card {
+  margin-top: 16px;
   border-radius: 8px;
-  padding: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
 }
 
-.criteria-header {
+.criteria-card :deep(.ant-card-head) {
+  background-color: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.criteria-card :deep(.ant-card-head-title) {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.criteria-table :deep(.ant-table-thead > tr > th) {
+  background-color: #f3f4f6;
+  font-weight: 600;
+  color: #374151;
+}
+
+.criteria-table :deep(.ant-table-tbody > tr > td) {
+  padding: 12px 16px;
+}
+
+.criteria-table :deep(.ant-table-tbody > tr:hover > td) {
+  background-color: #f9fafb;
+}
+
+.criteria-label :deep(.ant-form-item-label > label) {
+  font-weight: 500;
+  color: #374151;
+}
+
+.score-input-container {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 8px;
 }
 
-.criterion-item {
-  background-color: white;
-  border-radius: 6px;
-  padding: 12px;
-  margin-bottom: 2px;
+.score-input {
+  width: 80px;
 }
 
-.criterion-content {
+.score-max {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.comment-textarea {
+  min-height: 80px;
+  border-radius: 4px;
+}
+
+.comment-textarea:hover {
+  border-color: #60a5fa;
+}
+
+.criteria-divider {
+  margin: 16px 0;
+}
+
+.overall-assessment {
+  margin-top: 12px;
+  margin-bottom: 16px;
+}
+
+.overall-assessment :deep(.ant-form-item-label > label) {
+  font-weight: 500;
+  color: #374151;
+}
+
+.overall-select {
+  width: 100%;
+  font-size: 14px;
+  border-radius: 4px;
+}
+
+.assessment-option {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 
-.score-section {
-  max-width: 150px;
+.assessment-icon {
+  font-size: 16px;
 }
 
-@media (min-width: 768px) {
-  .score-input {
-    width: 120px !important;
-  }
+.excellent-icon {
+  color: #f59e0b;
 }
 
+.good-icon {
+  color: #10b981;
+}
+
+.average-icon {
+  color: #6b7280;
+}
+
+.poor-icon {
+  color: #ef4444;
+}
+
+.edit-button {
+  font-weight: 500;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 4px;
+}
 </style>

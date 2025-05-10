@@ -85,7 +85,7 @@
             <a-descriptions-item label="Status">
               <a-row>
                 <a-col :span="16">
-                  <a-select v-model:value="task.status" style="width: 140px" :default-value="task.status">
+                  <a-select v-model:value="task.status" style="width: 140px" :default-value="task.status || 'New'">
                     <a-select-option v-for="st in TaskStatus" :value="st.value">{{ st.label }}</a-select-option>
                   </a-select>
                 </a-col>

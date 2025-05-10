@@ -4,8 +4,8 @@
       <!-- Document List Section -->
       <a-col :span="24">
         <a-button
-          @click="showUploadForm"
-          style="
+            @click="showUploadForm"
+            style="
             float: right;
             background-color: azure;
             color: black;
@@ -14,9 +14,9 @@
           "
         >
           <img
-            src="@/assets/upload.png"
-            alt="Upload"
-            style="
+              src="@/assets/upload.png"
+              alt="Upload"
+              style="
               width: 14px;
               height: 14px;
               margin-right: 9px;
@@ -32,20 +32,20 @@
           <!-- Position Filter -->
           <a-col span="10">
             <a-input
-              v-model:value="docFilter.title"
-              placeholder="Keywords"
-              allowClear
-              style="width: 100%"
+                v-model:value="docFilter.title"
+                placeholder="Keywords"
+                allowClear
+                style="width: 100%"
             />
           </a-col>
 
           <!-- Status Filter -->
           <a-col span="3">
             <a-select
-              v-model:value="docFilter.format"
-              placeholder="Format"
-              allowClear
-              style="width: 100%"
+                v-model:value="docFilter.format"
+                placeholder="Format"
+                allowClear
+                style="width: 100%"
             >
               <a-select-option value="PDF">PDF</a-select-option>
               <a-select-option value="DOCX">DOCX</a-select-option>
@@ -57,10 +57,10 @@
 
           <a-col span="4">
             <a-select
-              v-model:value="docFilter.type"
-              placeholder="Type"
-              allowClear
-              style="width: 100%"
+                v-model:value="docFilter.type"
+                placeholder="Type"
+                allowClear
+                style="width: 100%"
             >
               <a-select-option value="General">General</a-select-option>
               <a-select-option value="Education">Education</a-select-option>
@@ -69,29 +69,31 @@
           </a-col>
 
           <a-button
-            type="primary"
-            style="margin-left: 8px"
-            @click="applyFilters"
-            >Search</a-button
+              type="primary"
+              style="margin-left: 8px"
+              @click="applyFilters"
+          >Search
+          </a-button
           >
 
           <a-button style="margin-left: 8px" @click="resetFilters"
-            >Reset</a-button
+          >Reset
+          </a-button
           >
         </a-row>
 
         <a-table
-          :data-source="documents"
-          :pagination="pagination"
-          @change="handlePaginationChange"
-          bordered
-          row-key="id"
+            :data-source="documents"
+            :pagination="pagination"
+            @change="handlePaginationChange"
+            bordered
+            row-key="id"
         >
           <a-table-column
-            title=""
-            :customRender="renderFormatIcon"
-            :width="1"
-            fixed="left"
+              title=""
+              :customRender="renderFormatIcon"
+              :width="1"
+              fixed="left"
           />
           <a-table-column :dataIndex="'title'" :width="450" align="left">
             <template #title>
@@ -99,42 +101,42 @@
             </template>
           </a-table-column>
           <a-table-column
-            title="Type"
-            :dataIndex="'type'"
-            align="center"
-            :width="130"
+              title="Type"
+              :dataIndex="'type'"
+              align="center"
+              :width="130"
           />
           <a-table-column
-            title="Uploaded By"
-            :dataIndex="'uploadDate'"
-            align="center"
-            :width="130"
+              title="Uploaded By"
+              :dataIndex="'uploadDate'"
+              align="center"
+              :width="130"
           />
           <a-table-column
-            title="Uploaded At"
-            :dataIndex="'uploadedAt'"
-            align="center"
-            :width="130"
+              title="Uploaded At"
+              :dataIndex="'uploadedAt'"
+              align="center"
+              :width="130"
           />
 
           <a-table-column title="Actions" align="center" :width="170">
             <template v-slot="record">
               <a-button
-                @click="controlAccess(record)"
-                type="text"
-                style="padding: 2px; min-width: auto; height: auto"
+                  @click="controlAccess(record)"
+                  type="text"
+                  style="padding: 2px; min-width: auto; height: auto"
               >
                 <img
-                  src="@/assets/permission.png"
-                  alt="Permission"
-                  style="width: 15px; height: 15px"
-              /></a-button>
+                    src="@/assets/permission.png"
+                    alt="Permission"
+                    style="width: 15px; height: 15px"
+                /></a-button>
 
               <a-button
-                v-if="record.value.format === 'PDF'"
-                @click="openInBrowser(record)"
-                type="text"
-                style="
+                  v-if="record.value.format === 'PDF'"
+                  @click="openInBrowser(record)"
+                  type="text"
+                  style="
                   padding: 2px;
                   min-width: auto;
                   height: auto;
@@ -142,14 +144,14 @@
                 "
               >
                 <img
-                  src="@/assets/open-in-browser.png"
-                  alt="Open"
-                  style="width: 15px; height: 15px"
-              /></a-button>
+                    src="@/assets/open-in-browser.png"
+                    alt="Open"
+                    style="width: 15px; height: 15px"
+                /></a-button>
               <a-button
-                @click="downloadDoc(record)"
-                type="text"
-                style="
+                  @click="downloadDoc(record)"
+                  type="text"
+                  style="
                   padding: 2px;
                   min-width: auto;
                   height: auto;
@@ -157,15 +159,15 @@
                 "
               >
                 <img
-                  src="@/assets/download-button.png"
-                  alt="Download"
-                  style="width: 15px; height: 15px"
+                    src="@/assets/download-button.png"
+                    alt="Download"
+                    style="width: 15px; height: 15px"
                 />
               </a-button>
               <a-button
-                @click="deleteDoc(record)"
-                type="text"
-                style="
+                  @click="deleteDoc(record)"
+                  type="text"
+                  style="
                   padding: 2px;
                   min-width: auto;
                   height: auto;
@@ -173,10 +175,10 @@
                 "
               >
                 <img
-                  src="@/assets/delete.png"
-                  alt="Delete"
-                  style="width: 15px; height: 15px"
-              /></a-button>
+                    src="@/assets/delete.png"
+                    alt="Delete"
+                    style="width: 15px; height: 15px"
+                /></a-button>
             </template>
           </a-table-column>
         </a-table>
@@ -184,34 +186,34 @@
 
       <!-- Modal for Upload Form -->
       <a-modal
-        v-model:visible="isUploadFormVisible"
-        title="Upload Document"
-        @cancel="handleCancel"
-        @ok="uploadFile"
-        width="500px"
+          v-model:visible="isUploadFormVisible"
+          title="Upload Document"
+          @cancel="handleCancel"
+          @ok="uploadFile"
+          width="500px"
       >
         <!-- Upload Form Fields -->
         <a-form ref="formDocument" :model="form">
           <!-- Title Field -->
           <a-form-item
-            label="Title"
-            name="title"
-            :rules="[{ required: true, message: 'Please enter title' }]"
+              label="Title"
+              name="title"
+              :rules="[{ required: true, message: 'Please enter title' }]"
           >
             <a-input
-              v-model:value="form.title"
-              placeholder="Enter document title"
+                v-model:value="form.title"
+                placeholder="Enter document title"
             />
           </a-form-item>
 
           <a-form-item
-            label="Type"
-            name="type"
-            :rules="[{ required: true, message: 'Please select type' }]"
+              label="Type"
+              name="type"
+              :rules="[{ required: true, message: 'Please select type' }]"
           >
             <a-select
-              v-model:value="form.type"
-              placeholder="Select document type"
+                v-model:value="form.type"
+                placeholder="Select document type"
             >
               <a-select-option value="GENERAL">General</a-select-option>
               <a-select-option value="EDUCATION">Education</a-select-option>
@@ -222,25 +224,25 @@
           <!-- Description Field -->
           <a-form-item label="Description">
             <a-textarea
-              v-model:value="form.description"
-              placeholder="Enter document description"
-              :rows="3"
+                v-model:value="form.description"
+                placeholder="Enter document description"
+                :rows="3"
             />
           </a-form-item>
 
           <!-- Upload Field -->
           <a-form-item
-            label="Document"
-            :rules="[{ required: true, message: 'Please select a file' }]"
+              label="Document"
+              :rules="[{ required: true, message: 'Please select a file' }]"
           >
             <a-upload
-              list-type="text"
-              :maxCount="1"
-              :customRequest="handleUpload"
-              :show-upload-list="true"
+                list-type="text"
+                :maxCount="1"
+                :customRequest="handleUpload"
+                :show-upload-list="true"
             >
               <div class="upload-button">
-                <a-icon style="font-size: 24px; color: #1890ff" />
+                <a-icon style="font-size: 24px; color: #1890ff"/>
                 <div style="color: #1890ff">Select Document</div>
               </div>
             </a-upload>
@@ -252,14 +254,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, reactive, h } from "vue";
-import { useDocumentStore } from "@/stores/documentStore";
+import {ref, onMounted, computed, reactive, h} from "vue";
+import {useDocumentStore} from "@/stores/documentStore";
 import pdfIcon from "@/assets/pdf.png";
 import docxIcon from "@/assets/doc.png";
 import xlsxIcon from "@/assets/xlsx.png";
 import pptxIcon from "@/assets/powerpoint.png";
-import { downloadDocument } from "@/services/documentService";
-import { message, Modal } from "ant-design-vue";
+import {downloadDocument} from "@/services/documentService";
+import {message, Modal} from "ant-design-vue";
 
 // Define reactive variables
 const documentStore = useDocumentStore();
@@ -268,7 +270,7 @@ const currentPage = computed(() => documentStore.currentPage);
 const totalElements = computed(() => documentStore.totalElements);
 const currentDocument = ref(null);
 
-const { list, upload } = documentStore;
+const {list, upload} = documentStore;
 const isUploadFormVisible = ref(false);
 const formDocument = ref(null);
 
@@ -290,7 +292,7 @@ function handleCancel() {
   isUploadFormVisible.value = false;
 }
 
-const handleUpload = ({ file, onSuccess }) => {
+const handleUpload = ({file, onSuccess}) => {
   setTimeout(() => {
     form.file = file;
     console.log("File ready for preview:", file);
@@ -328,13 +330,12 @@ const pagination = reactive({
   current: currentPage,
   pageSize: 10,
   total: totalElements,
-  pageSizeOptions: ["10", "20", "30"],
   showSizeChanger: true,
   showQuickJumper: true,
 });
 
 const applyFilters = () => {
-  documentStore.filters = { ...docFilter };
+  documentStore.filters = {...docFilter};
   console.log(docFilter);
   console.log("Applied Filters:", documentStore.filters);
   list(1, pagination.pageSize, documentStore.filters);
@@ -344,7 +345,7 @@ const resetFilters = () => {
   docFilter.title = null;
   docFilter.type = null;
   docFilter.format = null;
-  documentStore.filters = { ...docFilter };
+  documentStore.filters = {...docFilter};
   list(1, pagination.pageSize, documentStore.filters);
 };
 
@@ -353,7 +354,7 @@ const handlePaginationChange = (paginationConfig) => {
   list(paginationConfig.current, pagination.pageSize, documentStore.filters);
 };
 
-const renderFormatIcon = ({ record }) => {
+const renderFormatIcon = ({record}) => {
   const format = record.format;
   const iconMap = {
     PDF: pdfIcon,
@@ -384,7 +385,7 @@ const downloadDoc = async (record) => {
     const lastDotIndex = path.lastIndexOf(".");
 
     const fileExtension =
-      lastDotIndex !== -1 ? path.slice(lastDotIndex + 1) : "";
+        lastDotIndex !== -1 ? path.slice(lastDotIndex + 1) : "";
 
     // Create a URL for the file data
     const url = window.URL.createObjectURL(new Blob([response.data]));

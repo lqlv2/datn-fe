@@ -156,7 +156,6 @@ const pagination = reactive({
   current: currentPage,
   pageSize: 10,
   total: totalElements,
-  pageSizeOptions: ["10", "20", "30"],
   showSizeChanger: true,
   showQuickJumper: true,
 });

@@ -83,7 +83,7 @@
 
       <a-table-column title="Actions" align="center" fixed="right" :width="200">
         <template #default="{ record }">
-          <a-button type="link" @click="editTask(record)">
+          <a-button type="link" @click="viewTask(record)">
             <eye-outlined />
           </a-button>
         </template>
@@ -185,7 +185,6 @@ const authStore = useAuthStore();
 const taskStore = useTaskStore();
 const internsOfProject = computed(() => taskStore.internsOfProject);
 const allTasks = computed(() => taskStore.allTasks);
-const ownTasks = computed(() => taskStore.ownTasks);
 const currentPage = computed(() => taskStore.currentPage);
 const {
   fetchOwnTasks,
@@ -231,27 +230,6 @@ const fetchTasks = (page = 1, size = 10, status = taskStore.status) => {
   }
 };
 
-const redirectToTaskDetail = (task) => {
-  setSelectedTask(task);
-  router.push({name: "TaskDetail", params: {id: task.id}});
-};
-
-const showModal = async (record) => {
-  setSelectedTask(record);
-  await fetchInternsOfProject(record.id);
-  isModalOpen.value = true;
-};
-
-
-const handleAssignTask = async () => {
-
-  await taskStore.assignTask(selectedTask.value.id, Object.values(selectedIntern.value));
-  clearSelectedTask();
-  selectedIntern.value = null;
-  fetchTasks(currentPage.value, pagination.pageSize, taskStore.status);
-  isModalOpen.value = false;
-};
-
 const handleAddTask = async () => {
   const task = await createTask(newTask.value);
   fetchTasks(currentPage.value, pagination.pageSize, taskStore.status);
@@ -280,8 +258,8 @@ const editorOptions = {
   },
   placeholder: 'Enter task description...'
 };
-const editTask = (record) => {
-  router.push(`/mentor/task/${record.id}`);
+const viewTask = (record) => {
+  router.push(`/admin/task/${record.id}`);
 
 }
 const updateTaskInfo = async (id) => {

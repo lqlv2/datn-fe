@@ -7,3 +7,14 @@ export function toTitleCase(str) {
             .replace(/^./, match => match.toUpperCase()) // Capitalize the first letter
     );
 }
+
+export function getCurrentUserRole() {
+    return localStorage.getItem('userRole') || 'USER';
+}
+
+
+export const ROLES = {
+    ADMIN: 'ADMIN',
+    USER: 'USER',
+    MENTOR: 'MENTOR'
+}
