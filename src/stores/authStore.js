@@ -41,6 +41,7 @@ export const useAuthStore = defineStore('auth', () => {
       userRole.value = decodedToken.role;
       localStorage.setItem('userRole', decodedToken.role);
       localStorage.setItem('usernameDetail', decodedToken.iss);
+      localStorage.setItem('username', decodedToken.sub);
 
       const targetPage = ROLE_TO_PAGE[userRole.value] || '/';
       await router.push(targetPage);
@@ -80,6 +81,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     router.push(PAGES.LOGIN);
   }
+
 
   return {
     isAuthenticated,

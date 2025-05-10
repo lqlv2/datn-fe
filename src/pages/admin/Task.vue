@@ -164,26 +164,22 @@
 </template>
 <script setup>
 import {ref, onMounted, computed} from "vue";
-import {useAuthStore} from "@/stores/authStore";
-import {useTaskStore} from "@/stores/taskStore";
-import {useProjectStore} from "@/stores/projectStore";
+import {useAuthStore} from "@/stores/authStore.js";
+import {useTaskStore} from "@/stores/taskStore.js";
+import {useProjectStore} from "@/stores/projectStore.js";
 import {useRouter} from "vue-router";
 import {QuillEditor} from "@vueup/vue-quill";
-import {EditOutlined, EyeOutlined} from "@ant-design/icons-vue";
+import {EyeOutlined} from "@ant-design/icons-vue";
 
 const quillEditorRef = ref(null);
 const quillEditTaskRef = ref(null);
 
-const isModalOpen = ref(false);
 const isAddTaskModalOpen = ref(false);
 const isTaskDetailModalOpen = ref(false);
 const router = useRouter();
-const selectedInternAddForm = ref(null);
-const selectedIntern = ref(null);
 const projectStore = useProjectStore();
 const authStore = useAuthStore();
 const taskStore = useTaskStore();
-const internsOfProject = computed(() => taskStore.internsOfProject);
 const allTasks = computed(() => taskStore.allTasks);
 const currentPage = computed(() => taskStore.currentPage);
 const {

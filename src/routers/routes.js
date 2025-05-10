@@ -1,94 +1,114 @@
-import Login from '@/pages/Login.vue';
+import Login from '@/pages/share/Login.vue';
 import PAGES from '@/constants/pages';
 import NotFound from '@/components/NotFound.vue';
-import ForgotPassword from '@/pages/ForgotPassword.vue';
-import ResetPassword from '@/pages/ResetPassword.vue';
-import Account from '@/pages/Account.vue';
-import Intern from '@/pages/Intern.vue';
-import Mentor from '@/pages/Mentor.vue';
-import Task from '@/pages/Task.vue';
-import ChangePassword from '@/pages/ChangePassword.vue';
+import ForgotPassword from '@/pages/share/ForgotPassword.vue';
+import ResetPassword from '@/pages/share/ResetPassword.vue';
+import Account from '@/pages/admin/Account.vue';
+import Intern from '@/pages/admin/Intern.vue';
+import Mentor from '@/pages/admin/Mentor.vue';
+import Task from '@/pages/admin/Task.vue';
+import ChangePassword from '@/pages/share/ChangePassword.vue';
 import {useAuthStore} from '@/stores/authStore';
 import {createRouter, createWebHistory} from 'vue-router';
 import TaskDetail from '@/pages/intern/TaskDetail.vue';
 import TaskDetailMentor from '@/pages/mentor/TaskDetailMentor.vue';
 import TaskDetailAdmin from '@/pages/admin/TaskDetailAdmin.vue';
-import Evaluation from '@/pages/Evaluation.vue';
+import Evaluation from '@/pages/share/Evaluation.vue';
 import Intern2 from "@/pages/mentor/Intern2.vue";
 import Task2 from "@/pages/intern/Task2.vue";
-import EvaluationDetail from "@/pages/EvaluationDetail.vue";
+import TaskMentor from "@/pages/mentor/TaskMentor.vue";
+import EvaluationDetail from "@/pages/share/EvaluationDetail.vue";
+import Mentor2 from "@/pages/intern/Mentor2.vue";
 
 const routes = [
     {path: PAGES.LOGIN, component: Login},
     {path: PAGES.FORGOT_PASSWORD, component: ForgotPassword},
     {path: PAGES.RESET_PASSWORD, component: ResetPassword},
     {path: PAGES.CHANGE_PASSWORD, component: ChangePassword},
-
     {
         path: '/:catchAll(.*)',
         component: NotFound,
     },
-
     {
-        path: '/account',
-        name: 'Account',
-        component: Account,
+        path: '/mentor',
+        children: [
+            {
+                path: 'intern',
+                component: Intern2,
+            },
+            {
+                path: 'task',
+                component: TaskMentor,
+            },
+            {
+                path: 'task/:id',
+                component: TaskDetailMentor,
+            },
+            {
+                path: 'evaluation',
+                component: Evaluation,
+            },
+            {
+                path: 'evaluation/:id',
+                name: 'MentorEvaluationDetail',
+                component: EvaluationDetail,
+            }
+        ]
     },
     {
-        path: '/mentor/intern',
-        name: 'Intern2',
-        component: Intern2,
-    },
-    {
-        path: '/intern/task',
-        name: 'Task2',
-        component: Task2,
-    },
-    {
-        path: '/intern/task/:id',
-        name: 'Task3',
-        component: TaskDetail,
-    },
-    {
-        path: '/mentor/task/:id',
-        name: 'TaskDetailMentor',
-        component: TaskDetailMentor,
-    },
-    {
-        path: '/admin/task/:id',
-        name: 'TaskDetailAdmin',
-        component: TaskDetailAdmin,
+        path: '/admin',
+        children: [
+            {
+                path: 'account',
+                component: Account,
+            },
+            {
+                path: 'intern',
+                component: Intern,
+            },
+            {
+                path: 'mentor',
+                component: Mentor,
+            },
+            {
+                path: 'task',
+                component: Task,
+            },
+            {
+                path: 'task/:id',
+                component: TaskDetailAdmin,
+            },
+            {
+                path: 'evaluation',
+                component: Evaluation,
+            },
+            {
+                path: 'evaluation/:id',
+                component: EvaluationDetail,
+            }
+        ]
     },
     {
         path: '/intern',
-        name: 'Intern',
-        component: Intern,
+        children: [
+            {
+                path: 'mentor',
+                component: Mentor2,
+            },
+            {
+                path: 'task',
+                component: Task2,
+            },
+            {
+                path: 'task/:id',
+                component: TaskDetail,
+            },
+            {
+                path: 'evaluation',
+                component: EvaluationDetail,
+            }
+        ]
     },
-    {
-        path: '/mentor',
-        name: 'Mentor',
-        component: Mentor,
-    },
-    {
-        path: '/task',
-        name: 'Task',
-        component: Task,
-    },
-    {
-        path: '/evaluation',
-        name: 'Evaluation',
-        component: Evaluation,
-    },
-    {
-        path: '/evaluation/:id',
-        name: 'EvaluationDetail',
-        component: EvaluationDetail,
-    },
-    {
-        path: '/task-detail/:id',
-        name: 'TaskDetail',
-        component: TaskDetail,
-    }
 ];
 
 const router = createRouter({

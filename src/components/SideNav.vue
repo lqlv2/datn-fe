@@ -16,7 +16,7 @@
   </a-layout-sider>
 </template>
 
-<script lang="ts" setup>
+<script setup>
 import {
   FolderOutlined,
   UserOutlined,
@@ -29,24 +29,22 @@ import {
 import { ref, computed } from "vue";
 import { useAuthStore } from "@/stores/authStore"; 
 
-const collapsed = ref<boolean>(false);
-const selectedKeys = ref<string[]>(["1"]);
+const collapsed = ref(false);
+const selectedKeys = ref(["1"]);
 
 const authStore = useAuthStore();
 
 const menuItems = [
   { key: "1", label: "Account", route: "/account", icon: SettingOutlined, roles: ["ADMIN"] },
-  { key: "2", label: "Intern", route: "/intern", icon: UserOutlined, roles: ["ADMIN", "REC", "MENTOR", "DL", "EDU"]},
-  { key: "3", label: "Mentor", route: "/mentor", icon: TeamOutlined, roles: ["ADMIN", "DL", "EDU"] },
-  // { key: "4", label: "Project", route: "/project", icon: DesktopOutlined, roles: ["ADMIN", "DL", "INTERN", "MENTOR"] },
-  // { key: "5", label: "Document", route: "/document", icon: FolderOutlined, roles: ["ADMIN", "EDU"]},
+  { key: "2", label: "Intern", route: "/intern", icon: UserOutlined, roles: ["ADMIN", "MENTOR"]},
+  { key: "3", label: "Mentor", route: "/mentor", icon: TeamOutlined, roles: ["ADMIN", 'INTERN']},
   { key: "6", label: "Task", route: "/task", icon: ProfileOutlined, roles: ["ADMIN", "MENTOR", "INTERN"] },
-  { key: "7", label: "Evaluation", route: "/evaluation", icon: FundOutlined, roles: ["ADMIN", "EDU", "DL", "INTERN", "MENTOR"] }
+  { key: "7", label: "Evaluation", route: "/evaluation", icon: FundOutlined, roles: ["ADMIN", "INTERN", "MENTOR"] }
 ];
 
 // Filter menu items based on user role
 const filteredMenuItems = computed(() => {
-  return menuItems.filter((item) => item.roles.includes(authStore.userRole));
+  return menuItems.filter((item) => item.roles.includes(authStore.userRole)).map(item => ({...item, route: `/${authStore.userRole.toLowerCase()}${item.route}`}))
 });
 </script>
 

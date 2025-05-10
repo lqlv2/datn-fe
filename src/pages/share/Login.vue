@@ -2,32 +2,40 @@
   <div class="login-container">
     <div class="login-card">
       <div class="login-logo">
-        <img src="@/assets/login-logo.jpg" alt="Company Logo" />
+        <img src="../../assets/login-logo.jpg" alt="Company Logo" />
       </div>
       <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
-      <form @submit.prevent="forgot" class="login-form">
+      <form @submit.prevent="login" class="login-form">
         <div class="input-group">
-          <label for="email">Your Email</label>
+          <label for="username">Username</label>
           <input
-            type="email"
-            id="email"
-            v-model="email"
-            placeholder="Enter your email"
+            type="text"
+            id="username"
+            v-model="username"
+            placeholder="Enter your username"
             required
           />
         </div>
-
-        <button type="submit" class="login-button">Confirm</button>
+        <div class="input-group">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            v-model="password"
+            placeholder="Enter your password"
+            required
+          />
+        </div>
+        <button type="submit" class="login-button">Login</button>
       </form>
-
-      <div class="back-to-login">
-        <router-link to="/login">Back to Login</router-link>
+      <div class="forgot-password">
+        <router-link to="/forgot-password">Forgot password</router-link>
       </div>
     </div>
   </div>
 </template>
-  
-  <style scoped>
+
+<style scoped>
 .login-container {
   display: flex;
   justify-content: center;
@@ -46,7 +54,7 @@
 }
 
 .login-logo img {
-  width: 200px;
+  width: 220px;
 }
 
 .login-form {
@@ -67,7 +75,7 @@
 }
 
 .input-group input {
-  width: 94.5%;
+  width: 99.5%;
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 5px;
@@ -93,35 +101,35 @@
   background-color: #d4733a;
 }
 
-.back-to-login {
+.forgot-password {
   margin-top: 10px;
   text-align: left;
 }
 
-.back-to-login a {
+.forgot-password a {
   color: #462e1f;
   text-decoration: none;
 }
 
-.back-to-login a:hover {
+.forgot-password a:hover {
   text-decoration: underline;
 }
 </style>
-  
-  <script setup>
-import { ref } from "vue";
-import { useAuthStore } from "@/stores/authStore";
 
-const email = ref("");
+<script setup>
+import { ref } from "vue";
+import { useAuthStore } from "@/stores/authStore.js";
+
+const username = ref("");
+const password = ref("");
 const errorMessage = ref("");
 const authStore = useAuthStore();
 
-async function forgot() {
+async function login() {
   try {
-    await authStore.forgotPass(email.value);
+    await authStore.loginUser(username.value, password.value);
   } catch (error) {
-    errorMessage.value = "Email not exists";
+    errorMessage.value = "Invalid username or password";
   }
 }
 </script>
-  

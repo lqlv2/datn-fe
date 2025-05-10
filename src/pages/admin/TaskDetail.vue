@@ -1,9 +1,9 @@
 <script setup>
 import { ref, computed, reactive } from "vue";
 import { useRouter } from "vue-router";
-import { useTaskStore } from "@/stores/taskStore";
+import { useTaskStore } from "@/stores/taskStore.js";
 import { ArrowLeftOutlined } from "@ant-design/icons-vue";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuthStore } from "@/stores/authStore.js";
 
 const router = useRouter();
 const authStore = useAuthStore();

@@ -54,7 +54,7 @@
         title="Application will export by selecting filters, not the current list"
     >
       <a-button
-          style="float: right; background-color: green; color: aliceblue"
+          style="float: right; background-color: green; color: aliceblue; margin-bottom: 16px"
           @click="exportFile"
       >
         Export
@@ -81,7 +81,6 @@
 <script setup>
 import {computed, h, onMounted, reactive, ref, watch} from "vue";
 import {useInternStore} from "@/stores/internStore";
-import userImage from "@/assets/user.png";
 
 const internStore = useInternStore();
 
@@ -146,18 +145,10 @@ const filters = reactive({
   startDate: null,
   endDate: null,
 });
-
-// watch(filters, (newValue) => {
-//     filters.value = {...newValue, startDate: newValue.startDate != null ? filters.startDate.format("YYYY-MM-DD") : null, endDate: newValue.endDate != null ? newValue.endDate.format("YYYY-MM-DD") : null};
-// });
-
-// Pagination Config
 const pagination = reactive({
   current: currentPage,
   pageSize: 10,
   total: totalElements,
-  showSizeChanger: true,
-  showQuickJumper: true,
 });
 
 // Generate Columns Dynamically from Response Data

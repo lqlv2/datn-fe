@@ -20,11 +20,6 @@
             </a-menu>
           </template>
           <a-button type="link">
-            <a-avatar style="background-color: #87d068">
-              <template #icon>
-                <UserOutlined />
-              </template>
-            </a-avatar>
             <DownOutlined />
           </a-button>
         </a-dropdown>

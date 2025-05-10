@@ -1,44 +1,50 @@
 <template>
-  <div class="evaluation-container">
-    <a-card title="Intern Evaluation Details" class="evaluation-card">
-
+  <div class="evaluation-detail">
+    <div class="page-header">
+      <h2 class="header-title">Intern Evaluation Details</h2>
+    </div>
+    
+    <div class="content-container">
       <!-- Evaluation Summary -->
-      <a-descriptions title="Evaluation Summary" bordered :column="2" class="evaluation-summary mb-6">
-        <a-descriptions-item label="Intern Name">
-          {{ formData.internName }}
-        </a-descriptions-item>
-        <a-descriptions-item label="Mentor">
-          {{ formData.mentorName }}
-        </a-descriptions-item>
-        <a-descriptions-item label="Overall Score">
-          <span v-if="String(formData.averageScore) !== '-1'" class="score-value">
-            {{ formData.averageScore }}/10
-          </span>
-          <a-tag v-else color="gray">N/A</a-tag>
-        </a-descriptions-item>
-        <a-descriptions-item label="Evaluator">
-          {{ formData.mentorName }}
-        </a-descriptions-item>
-        <a-descriptions-item label="Overall">
-          <a-tag v-if="formData.overall" :color="getStatusColor(formData.overall)" class="status-tag">
-            {{ formData.overall.toUpperCase() }}
-          </a-tag>
-          <a-tag v-else color="gray">N/A</a-tag>
-        </a-descriptions-item>
-        <a-descriptions-item label="Date">
-          <span v-if="formData.evaluationDate"> {{ formData.evaluationDate }}</span>
-          <a-tag v-else color="gray">N/A</a-tag>
-        </a-descriptions-item>
-      </a-descriptions>
+      <a-card class="summary-card" title="Evaluation Summary">
+        <a-descriptions bordered :column="{ xs: 1, sm: 2 }" class="evaluation-summary">
+          <a-descriptions-item label="Intern Name">
+            {{ formData.internName }}
+          </a-descriptions-item>
+          <a-descriptions-item label="Mentor">
+            {{ formData.mentorName }}
+          </a-descriptions-item>
+          <a-descriptions-item label="Overall Score">
+            <span v-if="String(formData.averageScore) !== '-1'" class="score-value">
+              {{ formData.averageScore }}/10
+            </span>
+            <a-tag v-else color="gray">N/A</a-tag>
+          </a-descriptions-item>
+          <a-descriptions-item label="Evaluator">
+            {{ formData.mentorName }}
+          </a-descriptions-item>
+          <a-descriptions-item label="Overall">
+            <a-tag v-if="formData.overall" :color="getStatusColor(formData.overall)" class="status-tag">
+              {{ formData.overall.toUpperCase() }}
+            </a-tag>
+            <a-tag v-else color="gray">N/A</a-tag>
+          </a-descriptions-item>
+          <a-descriptions-item label="Date">
+            <span v-if="formData.evaluationDate"> {{ formData.evaluationDate }}</span>
+            <a-tag v-else color="gray">N/A</a-tag>
+          </a-descriptions-item>
+        </a-descriptions>
+      </a-card>
 
       <!-- Evaluation Criteria -->
-      <a-card title="Evaluation Criteria" class="criteria-card">
+      <a-card class="criteria-card" title="Evaluation Criteria">
         <a-table
             :columns="criteriaColumns"
             :data-source="Object.values(criteriaList)"
             :pagination="false"
             row-key="criterion"
             class="criteria-table"
+            :bordered="true"
         >
           <template #criteria="{ text }">
             <a-form-item :label="text" required class="criteria-label"/>
@@ -94,13 +100,13 @@
         <a-divider class="criteria-divider"/>
         <a-row justify="end">
           <a-col v-if="getCurrentUserRole() === ROLES.MENTOR">
-            <a-button type="primary" @click="handleEditEvaluation" class="edit-button">
+            <a-button type="primary" @click="handleEditEvaluation" class="action-button">
               Edit Evaluation
             </a-button>
           </a-col>
         </a-row>
       </a-card>
-    </a-card>
+    </div>
   </div>
 </template>
 
@@ -180,6 +186,8 @@ onMounted(() => {
 })
 
 const fetchEvaluationDetails = async (internId) => {
+  if (getCurrentUserRole() === 'INTERN')
+    internId = -1
   axiosInstance.get(`/admin/evaluation?internId=${internId}`)
       .then((response) => {
         formData.value = response.data.data[0];
@@ -240,37 +248,71 @@ const getStatusColor = (status) => {
 </script>
 
 <style scoped>
-/* Tailwind CSS for additional styling */
-.container {
-  @apply max-w-7xl;
+.evaluation-detail {
+  padding: 16px;
+  background-color: #f5f7fa;
+  min-height: 100vh;
 }
 
-/* Enhanced styling */
-.evaluation-container {
-  @apply max-w-7xl mx-auto p-4;
-  background-color: #f9fafb;
-  min-height: calc(100vh - 64px);
+.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eaeaea;
 }
 
-.evaluation-card {
+.header-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.content-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.summary-card,
+.criteria-card {
+  background-color: white;
   border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   overflow: hidden;
+}
+
+.summary-card :deep(.ant-card-head),
+.criteria-card :deep(.ant-card-head) {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #eaeaea;
+  padding: 16px 20px;
+}
+
+.summary-card :deep(.ant-card-head-title),
+.criteria-card :deep(.ant-card-head-title) {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.summary-card :deep(.ant-card-body),
+.criteria-card :deep(.ant-card-body) {
+  padding: 20px;
 }
 
 .evaluation-summary :deep(.ant-descriptions-header) {
   margin-bottom: 16px;
 }
 
-.evaluation-summary :deep(.ant-descriptions-title) {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1f2937;
+.evaluation-summary :deep(.ant-descriptions-item-label) {
+  background-color: #f0f5ff;
+  font-weight: 500;
+  color: #344054;
+  padding: 12px 16px;
 }
 
-.evaluation-summary :deep(.ant-descriptions-item-label) {
-  font-weight: 500;
-  background-color: #f3f4f6;
+.evaluation-summary :deep(.ant-descriptions-item-content) {
+  padding: 12px 16px;
 }
 
 .score-value {
@@ -281,33 +323,28 @@ const getStatusColor = (status) => {
 .status-tag {
   font-weight: 500;
   padding: 2px 8px;
+  border-radius: 12px;
 }
 
-.criteria-card {
-  margin-top: 16px;
+.criteria-table {
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
 }
 
-.criteria-card :deep(.ant-card-head) {
-  background-color: #f3f4f6;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.criteria-card :deep(.ant-card-head-title) {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1f2937;
+.criteria-table :deep(.ant-table) {
+  border-radius: 8px;
 }
 
 .criteria-table :deep(.ant-table-thead > tr > th) {
-  background-color: #f3f4f6;
+  background-color: #f0f5ff;
   font-weight: 600;
-  color: #374151;
+  padding: 16px;
+  color: #1f2937;
 }
 
 .criteria-table :deep(.ant-table-tbody > tr > td) {
-  padding: 12px 16px;
+  padding: 16px;
+  border-bottom: 1px solid #f1f3f5;
 }
 
 .criteria-table :deep(.ant-table-tbody > tr:hover > td) {
@@ -316,7 +353,7 @@ const getStatusColor = (status) => {
 
 .criteria-label :deep(.ant-form-item-label > label) {
   font-weight: 500;
-  color: #374151;
+  color: #344054;
 }
 
 .score-input-container {
@@ -336,11 +373,17 @@ const getStatusColor = (status) => {
 
 .comment-textarea {
   min-height: 80px;
-  border-radius: 4px;
+  border-radius: 6px;
+  border: 1px solid #d0d5dd;
 }
 
 .comment-textarea:hover {
-  border-color: #60a5fa;
+  border-color: #1890ff;
+}
+
+.comment-textarea:focus {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
 }
 
 .criteria-divider {
@@ -354,13 +397,13 @@ const getStatusColor = (status) => {
 
 .overall-assessment :deep(.ant-form-item-label > label) {
   font-weight: 500;
-  color: #374151;
+  color: #344054;
 }
 
 .overall-select {
   width: 100%;
   font-size: 14px;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 .assessment-option {
@@ -389,10 +432,36 @@ const getStatusColor = (status) => {
   color: #ef4444;
 }
 
-.edit-button {
+.action-button {
+  border-radius: 6px;
   font-weight: 500;
-  height: 36px;
   padding: 0 16px;
-  border-radius: 4px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .evaluation-detail {
+    padding: 12px;
+  }
+  
+  .summary-card :deep(.ant-card-body),
+  .criteria-card :deep(.ant-card-body) {
+    padding: 16px;
+  }
+  
+  .header-title {
+    font-size: 1.25rem;
+  }
+  
+  .evaluation-summary :deep(.ant-descriptions-item-label),
+  .evaluation-summary :deep(.ant-descriptions-item-content),
+  .criteria-table :deep(.ant-table-thead > tr > th),
+  .criteria-table :deep(.ant-table-tbody > tr > td) {
+    padding: 12px;
+  }
 }
 </style>

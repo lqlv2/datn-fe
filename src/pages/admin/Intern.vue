@@ -219,7 +219,7 @@
 
 <script setup>
 import {ref, reactive, computed, onMounted, h} from "vue";
-import {useInternStore} from "@/stores/internStore";
+import {useInternStore} from "@/stores/internStore.js";
 import {PlusOutlined, EditOutlined, DeleteOutlined, ExclamationCircleOutlined} from "@ant-design/icons-vue";
 import {useMentorStore} from "@/stores/mentorStore.js";
 import DeleteModal from "@/components/DeleteModal.vue";
@@ -349,8 +349,6 @@ const pagination = reactive({
   current: currentPage,
   pageSize: 10,
   total: totalElements,
-  showSizeChanger: true,
-  showQuickJumper: true,
 });
 
 

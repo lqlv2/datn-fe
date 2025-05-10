@@ -297,7 +297,7 @@
 
 <script setup>
 import {ref, reactive, computed, onMounted} from "vue";
-import {useAccountStore} from "@/stores/accountStore";
+import {useAccountStore} from "@/stores/accountStore.js";
 import {message, Modal} from "ant-design-vue";
 import {
   PlusOutlined,

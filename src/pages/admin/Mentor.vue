@@ -183,8 +183,8 @@
 
 <script setup>
 import {computed, h, onMounted, reactive, ref} from "vue";
-import {useMentorStore} from "@/stores/mentorStore";
-import {useAuthStore} from "@/stores/authStore";
+import {useMentorStore} from "@/stores/mentorStore.js";
+import {useAuthStore} from "@/stores/authStore.js";
 import {DeleteOutlined, EditOutlined} from "@ant-design/icons-vue";
 import {updateMentor} from "@/services/mentorService.js";
 import {message} from "ant-design-vue";
@@ -321,8 +321,6 @@ const pagination = reactive({
   current: currentPage,
   pageSize: 10,
   total: totalElements,
-  showSizeChanger: true,
-  showQuickJumper: true,
 });
 
 

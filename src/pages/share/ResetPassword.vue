@@ -2,7 +2,7 @@
     <div class="reset-container">
       <div class="reset-card">
         <div class="reset-logo">
-          <img src="@/assets/login-logo.jpg" alt="Company Logo" />
+          <img src="../../assets/login-logo.jpg" alt="Company Logo" />
         </div>
         <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
         <div v-if="successMessage" class="success-message">{{ successMessage }}</div>
@@ -108,9 +108,9 @@
   
   <script setup>
   import { ref } from "vue";
-  import { useAuthStore } from "@/stores/authStore";
+  import { useAuthStore } from "@/stores/authStore.js";
   import { useRoute, useRouter } from "vue-router";
-  import PAGES from "@/constants/pages";
+  import PAGES from "@/constants/pages.js";
   
   const newPassword = ref("");
   const confirmPassword = ref("");

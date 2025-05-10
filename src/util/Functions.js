@@ -13,6 +13,11 @@ export function getCurrentUserRole() {
 }
 
 
+export function getCurrentUsername() {
+    return localStorage.getItem('username') || '';
+}
+
+
 export const ROLES = {
     ADMIN: 'ADMIN',
     USER: 'USER',
