@@ -3,7 +3,7 @@
     <div class="header-content" style="padding: 16px">
       <!-- Logo on the left -->
       <img src="@/assets/login-logo.jpg" alt="Logo" class="logo" />
-      <span class="title">Internship Management System </span>
+      <span class="title">Internship Management System</span>
 
       <div v-if="isLogin" div class="user-info">
         <span class="username">{{ usernameDetail }}</span>
@@ -14,7 +14,7 @@
               <a-menu-item key="1">
                 <a @click.prevent="changePassword">Change Password</a>
               </a-menu-item>
-              <a-menu-item key="2">
+              <a-menu-item key="2" class="logout-item">
                 <a @click.prevent="logout">Logout</a>
               </a-menu-item>
             </a-menu>
@@ -63,6 +63,7 @@ const logout = () => {
   display: flex;
   align-items: center;
   width: 100%;
+  padding: 0 24px;
 }
 
 .logo {
@@ -77,6 +78,7 @@ const logout = () => {
   flex-grow: 1; /* Pushes user-info to the right */
   font-size: 1.5em;
   color: #f0f0f0;
+  letter-spacing: 0.5px;
 }
 
 .user-info {
@@ -87,5 +89,13 @@ const logout = () => {
   margin-right: 16px;
   font-size: 16px;
   color: #f0f0f0;
+}
+
+a-menu-item:hover {
+  background-color: #e6e6e6;
+}
+
+.logout-item a {
+  color: red;
 }
 </style>

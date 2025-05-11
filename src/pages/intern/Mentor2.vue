@@ -53,7 +53,6 @@
     
     <div class="table-container">
       <a-table
-          v-if="columns.length > 0 && mentors.length > 0"
           :columns="columns"
           :data-source="mentors"
           :pagination="pagination"
@@ -70,10 +69,6 @@
           </a-tag>
         </template>
       </a-table>
-      
-      <div v-else-if="mentors.length === 0" class="empty-state">
-        <a-empty description="No data found" />
-      </div>
     </div>
   </div>
 </template>

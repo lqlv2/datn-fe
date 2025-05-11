@@ -53,7 +53,6 @@
 
     <div class="table-container">
       <a-table
-        v-if="columns.length > 0 && mentors.length > 0"
         :columns="columns"
         :data-source="mentors"
         :pagination="pagination"
