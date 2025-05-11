@@ -19,6 +19,8 @@ import Task2 from "@/pages/intern/Task2.vue";
 import TaskMentor from "@/pages/mentor/TaskMentor.vue";
 import EvaluationDetail from "@/pages/share/EvaluationDetail.vue";
 import Mentor2 from "@/pages/intern/Mentor2.vue";
+import AdminIntern from "@/pages/intern/AdminIntern.vue";
+import {getCurrentUserRole} from "@/util/Functions.js";
 
 const routes = [
     {path: PAGES.LOGIN, component: Login},
@@ -32,6 +34,10 @@ const routes = [
     {
         path: '/mentor',
         children: [
+            {
+                path: 'admin',
+                component: AdminIntern,
+            },
             {
                 path: 'intern',
                 component: Intern2,
@@ -96,6 +102,10 @@ const routes = [
                 component: Mentor2,
             },
             {
+                path: 'admin',
+                component: AdminIntern,
+            },
+            {
                 path: 'task',
                 component: Task2,
             },
@@ -118,13 +128,14 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
     const authStore = useAuthStore();
+    const publicRoutes = [PAGES.LOGIN, PAGES.FORGOT_PASSWORD, PAGES.RESET_PASSWORD];
 
-    if (
-        !authStore.isAuthenticated &&
-        to.path !== PAGES.LOGIN &&
-        to.path !== PAGES.FORGOT_PASSWORD &&
-        to.path != PAGES.RESET_PASSWORD
-    ) {
+     if (publicRoutes.includes(to.path)) {
+        next()
+    } else if (!authStore.isAuthenticated && !publicRoutes.includes(to.path)) {
+        next(PAGES.LOGIN);
+    } else if (authStore.isAuthenticated && !publicRoutes.includes(to.path) && !to.path.startsWith(`/${getCurrentUserRole().toLowerCase()}`)) {
+        authStore.logout();
         next(PAGES.LOGIN);
     } else {
         next();

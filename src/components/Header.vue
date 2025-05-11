@@ -1,6 +1,6 @@
 <template>
   <a-layout-header class="header">
-    <div class="header-content">
+    <div class="header-content" style="padding: 16px">
       <!-- Logo on the left -->
       <img src="@/assets/login-logo.jpg" alt="Logo" class="logo" />
       <span class="title">Internship Management System </span>
@@ -30,7 +30,7 @@
 
 <script setup>
 import { useAuthStore } from "@/stores/authStore";
-import { useRouter } from 'vue-router'; 
+import { useRouter } from 'vue-router';
 import { UserOutlined } from "@ant-design/icons-vue";
 import { computed } from "vue";
 import PAGES from "@/constants/pages";
@@ -56,7 +56,7 @@ const logout = () => {
   background-color: rgb(29, 31, 59);
   display: flex;
   align-items: center;
-  padding: 0 16px;
+  padding: 16px;
 }
 
 .header-content {
@@ -75,7 +75,7 @@ const logout = () => {
   font-weight: bold;
   margin-left: 17px;
   flex-grow: 1; /* Pushes user-info to the right */
-  font-size: 1.2em;
+  font-size: 1.5em;
   color: #f0f0f0;
 }
 

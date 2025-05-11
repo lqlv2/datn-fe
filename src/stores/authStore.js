@@ -5,6 +5,7 @@ import { jwtDecode } from 'jwt-decode';
 import { useRouter } from 'vue-router';
 import PAGES from '@/constants/pages';
 import { login, forgotPassword, resetPassword } from '@/services/authService';
+import {getCurrentUserRole} from "@/util/Functions.js";
 
 export const useAuthStore = defineStore('auth', () => {
   const usernameDetail = ref(localStorage.getItem('usernameDetail') || null);
@@ -43,7 +44,7 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem('usernameDetail', decodedToken.iss);
       localStorage.setItem('username', decodedToken.sub);
 
-      const targetPage = ROLE_TO_PAGE[userRole.value] || '/';
+      const targetPage = `/${getCurrentUserRole().toLowerCase()}/task`;
       await router.push(targetPage);
 
     } catch (error) {

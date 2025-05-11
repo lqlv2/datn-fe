@@ -108,7 +108,6 @@ onMounted(async () => {
         data-index="id"
         key="id"
         width="20"
-        fixed="left"
         align="center"
       />
       <a-table-column
@@ -146,7 +145,7 @@ onMounted(async () => {
         width="130"
         align="center"
       />
-      <a-table-column title="Actions" align="center" fixed="right" :width="170">
+      <a-table-column title="Actions" align="center">
         <template #default="{ record }">
           <a-button
             v-if="userRole === 'MENTOR'"

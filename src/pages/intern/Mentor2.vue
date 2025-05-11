@@ -115,9 +115,7 @@ const columns = [
     title: "",
     key: "action",
     align: "center",
-    fixed: "right",
     slots: {customRender: 'action'},
-
   }
 ]
 const {

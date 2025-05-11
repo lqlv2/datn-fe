@@ -4,11 +4,14 @@
       <h2 class="header-title">Task List</h2>
 
       <a-button
-        v-if="userRole === 'MENTOR'"
-        type="primary"
-        class="add-task-button"
-        @click="showAddTaskModal"
+          v-if="userRole === 'MENTOR'"
+          type="primary"
+          class="add-task-button"
+          @click="showAddTaskModal"
       >
+        <template #icon>
+          <PlusOutlined/>
+        </template>
         Add Task
       </a-button>
     </div>
@@ -18,11 +21,11 @@
         <a-col :xs="24" :sm="12" :md="8" :lg="6">
           <div class="filter-item">
             <a-select
-              v-model:value="taskStore.status"
-              placeholder="Status"
-              class="filter-select"
-              allow-clear
-              @change="
+                v-model:value="taskStore.status"
+                placeholder="Status"
+                class="filter-select"
+                allow-clear
+                @change="
                 fetchTasks(pagination.current, pagination.pageSize, taskStore.status)
               "
             >
@@ -37,38 +40,37 @@
 
     <div class="table-container">
       <a-table
-        :dataSource="allTasks"
-        :pagination="pagination"
-        @change="handlePaginationChange"
-        rowKey="id"
-        bordered
-        :scroll="{ x: 1500, y: 500 }"
-        :row-class-name="(_record, index) => (index % 2 === 0 ? 'table-row-light' : 'table-row-dark')"
-        class="custom-table"
+          :dataSource="allTasks"
+          :pagination="pagination"
+          @change="handlePaginationChange"
+          rowKey="id"
+          bordered
+          :scroll="{ x: 1500, y: 500 }"
+          :row-class-name="(_record, index) => (index % 2 === 0 ? 'table-row-light' : 'table-row-dark')"
+          class="custom-table"
       >
         <a-table-column
-          title="ID"
-          data-index="id"
-          key="id"
-          width="20"
-          fixed="left"
-          align="center"
+            title="ID"
+            data-index="id"
+            key="id"
+            width="20"
+            align="center"
         />
 
         <a-table-column
-          title="Title"
-          data-index="title"
-          key="title"
-          width="130"
-          align="center"
+            title="Title"
+            data-index="title"
+            key="title"
+            width="130"
+            align="center"
         />
 
         <a-table-column
-          title="Status"
-          data-index="status"
-          key="status"
-          width="130"
-          align="center"
+            title="Status"
+            data-index="status"
+            key="status"
+            width="130"
+            align="center"
         >
           <template #default="{ text }">
             <a-tag :color="getStatusColor(text)" class="status-tag">
@@ -78,24 +80,24 @@
         </a-table-column>
 
         <a-table-column
-          title="Due Date"
-          data-index="dueDate"
-          key="dueDate"
-          width="150"
-          align="center"
+            title="Due Date"
+            data-index="dueDate"
+            key="dueDate"
+            width="150"
+            align="center"
         />
         <a-table-column
-          title="Created At"
-          data-index="createdAt"
-          key="createdAt"
-          width="150"
-          align="center"
+            title="Created At"
+            data-index="createdAt"
+            key="createdAt"
+            width="150"
+            align="center"
         />
 
-        <a-table-column title="Actions" align="center" fixed="right" :width="200">
+        <a-table-column title="Actions" align="center">
           <template #default="{ record }">
             <a-button type="primary" size="small" class="action-button" @click="viewTask(record)">
-              <eye-outlined />
+              <eye-outlined/>
               View
             </a-button>
           </template>
@@ -104,68 +106,68 @@
     </div>
 
     <a-modal
-      v-model:open="isAddTaskModalOpen"
-      title="Add New Task"
-      @ok="handleAddTask"
-      width="60vw"
-      class="task-modal"
+        v-model:open="isAddTaskModalOpen"
+        title="Add New Task"
+        @ok="handleAddTask"
+        width="60vw"
+        class="task-modal"
     >
       <a-form layout="vertical">
         <a-form-item label="Title" required>
           <a-input
-            v-model:value="newTask.title"
-            placeholder="Enter task title"
+              v-model:value="newTask.title"
+              placeholder="Enter task title"
           />
         </a-form-item>
         <div style="height: 280px">
           <a-form-item label="Description" required>
             <div style="height: 200px">
               <QuillEditor v-model:content="newTask.description" content-type="html" :options="editorOptions"
-                         ref="quillEditTaskRef"/>
+                           ref="quillEditTaskRef"/>
             </div>
           </a-form-item>
         </div>
 
         <a-form-item label="Due Date" required>
           <a-date-picker
-            v-model:value="newTask.dueDate"
-            placeholder="Select due date"
-            style="width: 100%"
+              v-model:value="newTask.dueDate"
+              placeholder="Select due date"
+              style="width: 100%"
           />
         </a-form-item>
       </a-form>
     </a-modal>
 
     <a-modal
-      v-model:open="isTaskDetailModalOpen"
-      title="Task detail"
-      width="60vw"
-      class="task-modal"
+        v-model:open="isTaskDetailModalOpen"
+        title="Task detail"
+        width="60vw"
+        class="task-modal"
     >
       <a-form layout="vertical">
         <a-form-item label="Title" required>
           <a-input
-            v-model:value="taskDetail.title"
-            placeholder="Enter task title"
+              v-model:value="taskDetail.title"
+              placeholder="Enter task title"
           />
         </a-form-item>
         <div style="height: 280px">
           <a-form-item label="Description" required>
             <div style="height: 200px">
               <QuillEditor v-model:content="taskDetail.description" content-type="html" :options="editorOptions"
-                         ref="quillEditorRef"/>
+                           ref="quillEditorRef"/>
             </div>
           </a-form-item>
         </div>
 
         <a-form-item label="Due Date" required>
           <a-date-picker
-            v-model:value="taskDetail.dueDate"
-            placeholder="Select due date"
-            format="YYYY-MM-DD"
-            value-format="YYYY-MM-DD"
-            :disabledDate="(current) => current && current < new Date().setHours(0,0,0,0)"
-            style="width: 100%"
+              v-model:value="taskDetail.dueDate"
+              placeholder="Select due date"
+              format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD"
+              :disabledDate="(current) => current && current < new Date().setHours(0,0,0,0)"
+              style="width: 100%"
           />
         </a-form-item>
       </a-form>
@@ -178,13 +180,13 @@
 </template>
 
 <script setup>
-import {ref, onMounted, computed} from "vue";
+import {computed, onMounted, ref} from "vue";
 import {useAuthStore} from "@/stores/authStore";
 import {useTaskStore} from "@/stores/taskStore";
 import {useProjectStore} from "@/stores/projectStore";
 import {useRouter} from "vue-router";
 import {QuillEditor} from "@vueup/vue-quill";
-import {EditOutlined, EyeOutlined} from "@ant-design/icons-vue";
+import {EyeOutlined, PlusOutlined} from "@ant-design/icons-vue";
 
 const quillEditorRef = ref(null);
 const quillEditTaskRef = ref(null);
@@ -387,7 +389,6 @@ const getStatusColor = (status) => {
 }
 
 .status-tag {
-  font-weight: medium;
   padding: 2px 8px;
   border-radius: 12px;
 }
@@ -432,22 +433,22 @@ const getStatusColor = (status) => {
   .task-management {
     padding: 12px;
   }
-  
+
   .filter-container,
   .table-container {
     padding: 16px;
   }
-  
+
   .header-title {
     font-size: 1.25rem;
   }
-  
+
   .page-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
   }
-  
+
   .add-task-button {
     width: 100%;
   }

@@ -19,7 +19,6 @@
         <div class="task-header">
           <a-typography-title :level="2">{{ task.title }}</a-typography-title>
           <div class="task-actions">
-            <a-button type="primary">Edit</a-button>
             <a-button>Share</a-button>
             <a-dropdown>
               <a-button>More</a-button>

@@ -15,10 +15,10 @@
                 @change="fetchTasks(pagination.current, pagination.pageSize, taskStore.status)"
             >
               <a-select-option :value="null">All</a-select-option>
-              <a-select-option value="TO_DO">To do</a-select-option>
-              <a-select-option value="PENDING">Pending</a-select-option>
-              <a-select-option value="IN_PROGRESS">In Progress</a-select-option>
-              <a-select-option value="DONE">Done</a-select-option>
+              <a-select-option value="To do">To do</a-select-option>
+              <a-select-option value="Pending">Pending</a-select-option>
+              <a-select-option value="In Progress">In Progress</a-select-option>
+              <a-select-option value="Done">Done</a-select-option>
             </a-select>
           </div>
         </a-col>
@@ -40,7 +40,7 @@
             title="ID"
             data-index="id"
             key="id"
-            fixed="left"
+            align="center"
         />
 
         <a-table-column
@@ -68,9 +68,15 @@
             data-index="status"
             key="status"
             align="center"
-        />
+        >
+          <template #default="{ text }">
+            <a-tag :color="getStatusColor(text)" class="status-tag">
+              {{ text }}
+            </a-tag>
+          </template>
+        </a-table-column>
 
-        <a-table-column title="Actions" align="center" fixed="right" :width="200">
+        <a-table-column title="Actions" align="center">
           <template #default="{ record }">
             <a-button type="primary" size="small" @click="viewTask(record)" class="action-button">
               <eye-outlined />
@@ -88,7 +94,6 @@
 import {computed, onMounted, ref} from "vue";
 import {useTaskStore} from "@/stores/taskStore";
 import {useRouter} from "vue-router";
-import {QuillEditor} from "@vueup/vue-quill";
 import {EyeOutlined} from "@ant-design/icons-vue";
 
 const router = useRouter();
@@ -113,6 +118,21 @@ const fetchTasks = (page = 1, size = 10, status = taskStore.status) => {
 onMounted(() => {
   fetchTasks()
 });
+
+const getStatusColor = (status) => {
+  switch (status) {
+    case 'To Do':
+      return 'orange';
+    case 'Done':
+      return 'green';
+    case 'In Progress':
+      return 'blue';
+    case 'Pending':
+      return 'yellow';
+    default:
+      return 'gray';
+  }
+};
 
 const handlePaginationChange = (paginationConfig) => {
   pagination.pageSize = paginationConfig.pageSize;
