@@ -134,7 +134,7 @@ router.beforeEach((to, from, next) => {
         next()
     } else if (!authStore.isAuthenticated && !publicRoutes.includes(to.path)) {
         next(PAGES.LOGIN);
-    } else if (authStore.isAuthenticated && !publicRoutes.includes(to.path) && !to.path.startsWith(`/${getCurrentUserRole().toLowerCase()}`)) {
+    } else if (authStore.isAuthenticated && !publicRoutes.includes(to.path) && !to.path.startsWith(`/${getCurrentUserRole().toLowerCase()}`) && !to.path.startsWith("/intern")) {
         authStore.logout();
         next(PAGES.LOGIN);
     } else {
