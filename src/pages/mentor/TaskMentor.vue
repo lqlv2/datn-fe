@@ -1,157 +1,171 @@
 <template>
-  <div>
-    <h2 style="margin-left: 10px">Task List</h2>
+  <div class="task-management">
+    <div class="page-header">
+      <h2 class="header-title">Task List</h2>
 
-    <a-button
+      <a-button
         v-if="userRole === 'MENTOR'"
-        style="
-        float: right;
-        margin-right: 8px;
-        background-color: saddlebrown;
-        color: aliceblue;
-      "
+        type="primary"
+        class="add-task-button"
         @click="showAddTaskModal"
-    >Add Task
-    </a-button
-    >
-
-    <div
-        style="margin-bottom: 16px; display: flex; gap: 10px; align-items: center"
-    >
-      <a-select
-          v-model:value="taskStore.status"
-          placeholder="Status"
-          style="width: 130px; margin-left: 10px"
-          @change="
-          fetchTasks(pagination.current, pagination.pageSize, taskStore.status)
-        "
       >
-        <a-select-option :value="null">All</a-select-option>
-        <a-select-option value="PENDING">Pending</a-select-option>
-        <a-select-option value="IN PROGRESS">In Progress</a-select-option>
-        <a-select-option value="COMPLETED">Completed</a-select-option>
-      </a-select>
+        Add Task
+      </a-button>
     </div>
 
-    <a-table
+    <div class="filter-container">
+      <a-row :gutter="[24, 16]" align="middle">
+        <a-col :xs="24" :sm="12" :md="8" :lg="6">
+          <div class="filter-item">
+            <a-select
+              v-model:value="taskStore.status"
+              placeholder="Status"
+              class="filter-select"
+              allow-clear
+              @change="
+                fetchTasks(pagination.current, pagination.pageSize, taskStore.status)
+              "
+            >
+              <a-select-option v-for="item in TaskStatus" :key="item.value" :value="item.value">
+                {{ item.label }}
+              </a-select-option>
+            </a-select>
+          </div>
+        </a-col>
+      </a-row>
+    </div>
+
+    <div class="table-container">
+      <a-table
         :dataSource="allTasks"
         :pagination="pagination"
         @change="handlePaginationChange"
         rowKey="id"
         bordered
         :scroll="{ x: 1500, y: 500 }"
-    >
-      <a-table-column
+        :row-class-name="(_record, index) => (index % 2 === 0 ? 'table-row-light' : 'table-row-dark')"
+        class="custom-table"
+      >
+        <a-table-column
           title="ID"
           data-index="id"
           key="id"
           width="20"
           fixed="left"
           align="center"
-      />
+        />
 
-      <a-table-column
+        <a-table-column
           title="Title"
           data-index="title"
           key="title"
           width="130"
           align="center"
-      />
+        />
 
-      <a-table-column
+        <a-table-column
           title="Status"
           data-index="status"
           key="status"
           width="130"
           align="center"
-      />
+        >
+          <template #default="{ text }">
+            <a-tag :color="getStatusColor(text)" class="status-tag">
+              {{ text }}
+            </a-tag>
+          </template>
+        </a-table-column>
 
-      <a-table-column
+        <a-table-column
           title="Due Date"
           data-index="dueDate"
           key="dueDate"
           width="150"
           align="center"
-      />
-      <a-table-column
+        />
+        <a-table-column
           title="Created At"
           data-index="createdAt"
           key="createdAt"
           width="150"
           align="center"
-      />
+        />
 
-      <a-table-column title="Actions" align="center" fixed="right" :width="200">
-        <template #default="{ record }">
-          <a-button type="link" @click="viewTask(record)">
-            <eye-outlined />
-          </a-button>
-        </template>
-      </a-table-column>
-    </a-table>
+        <a-table-column title="Actions" align="center" fixed="right" :width="200">
+          <template #default="{ record }">
+            <a-button type="primary" size="small" class="action-button" @click="viewTask(record)">
+              <eye-outlined />
+              View
+            </a-button>
+          </template>
+        </a-table-column>
+      </a-table>
+    </div>
 
     <a-modal
-        v-model:open="isAddTaskModalOpen"
-        title="Add New Task"
-        @ok="handleAddTask"
-        width="60vw"
+      v-model:open="isAddTaskModalOpen"
+      title="Add New Task"
+      @ok="handleAddTask"
+      width="60vw"
+      class="task-modal"
     >
       <a-form layout="vertical">
         <a-form-item label="Title" required>
           <a-input
-              v-model:value="newTask.title"
-              placeholder="Enter task title"
+            v-model:value="newTask.title"
+            placeholder="Enter task title"
           />
         </a-form-item>
         <div style="height: 280px">
           <a-form-item label="Description" required>
             <div style="height: 200px">
               <QuillEditor v-model:content="newTask.description" content-type="html" :options="editorOptions"
-                           ref="quillEditTaskRef"/>
+                         ref="quillEditTaskRef"/>
             </div>
           </a-form-item>
         </div>
 
         <a-form-item label="Due Date" required>
           <a-date-picker
-              v-model:value="newTask.dueDate"
-              placeholder="Select due date"
-              style="width: 100%"
+            v-model:value="newTask.dueDate"
+            placeholder="Select due date"
+            style="width: 100%"
           />
         </a-form-item>
       </a-form>
     </a-modal>
 
     <a-modal
-        v-model:open="isTaskDetailModalOpen"
-        title="Task detail"
-        @ok="handleAddTask"
-        width="60vw"
+      v-model:open="isTaskDetailModalOpen"
+      title="Task detail"
+      width="60vw"
+      class="task-modal"
     >
       <a-form layout="vertical">
         <a-form-item label="Title" required>
           <a-input
-              v-model:value="taskDetail.title"
-              placeholder="Enter task title"
+            v-model:value="taskDetail.title"
+            placeholder="Enter task title"
           />
         </a-form-item>
         <div style="height: 280px">
           <a-form-item label="Description" required>
             <div style="height: 200px">
               <QuillEditor v-model:content="taskDetail.description" content-type="html" :options="editorOptions"
-                           ref="quillEditorRef"/>
+                         ref="quillEditorRef"/>
             </div>
           </a-form-item>
         </div>
 
         <a-form-item label="Due Date" required>
           <a-date-picker
-              v-model:value="taskDetail.dueDate"
-              placeholder="Select due date"
-              format="YYYY-MM-DD"
-              value-format="YYYY-MM-DD"
-              :disabledDate="(current) => current && current < new Date().setHours(0,0,0,0)"
-              style="width: 100%"
+            v-model:value="taskDetail.dueDate"
+            placeholder="Select due date"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            :disabledDate="(current) => current && current < new Date().setHours(0,0,0,0)"
+            style="width: 100%"
           />
         </a-form-item>
       </a-form>
@@ -162,6 +176,7 @@
     </a-modal>
   </div>
 </template>
+
 <script setup>
 import {ref, onMounted, computed} from "vue";
 import {useAuthStore} from "@/stores/authStore";
@@ -188,6 +203,13 @@ const {
   createTask,
   updateTask,
 } = taskStore;
+
+const TaskStatus = [
+  {value: null, label: "All"},
+  {value: 'New', label: 'New'},
+  {value: 'Assigned', label: 'Assigned'},
+  {value: 'Done', label: 'Done'},
+];
 
 const userRole = computed(() => authStore.userRole);
 const pagination = ref({
@@ -259,14 +281,175 @@ const updateTaskInfo = async (id) => {
   fetchTasks(currentPage.value, pagination.pageSize, taskStore.status);
   isTaskDetailModalOpen.value = false;
 }
+
+const getStatusColor = (status) => {
+  switch (status) {
+    case 'New':
+      return 'orange';
+    case 'Assigned':
+      return 'blue';
+    case 'Done':
+      return 'green';
+    default:
+      return 'gray';
+  }
+};
 </script>
 
 <style scoped>
-h2 {
+.task-management {
+  padding: 16px;
+  background-color: #f5f7fa;
+  border-radius: 8px;
+}
+
+.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eaeaea;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.add-task-button {
+  background-color: #1890ff;
+  color: white;
+  border-radius: 6px;
+  font-weight: 500;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.filter-container {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+}
+
+.filter-item {
   margin-bottom: 16px;
 }
 
-.modal-1000px {
-  width: 1000px !important;
+.filter-select {
+  width: 100%;
+  border-radius: 6px;
+}
+
+.table-container {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.custom-table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.custom-table :deep(.ant-table) {
+  border-radius: 8px;
+}
+
+.custom-table :deep(.ant-table-thead > tr > th) {
+  background-color: #f0f5ff;
+  font-weight: 600;
+  padding: 16px;
+  color: #1f2937;
+}
+
+.custom-table :deep(.ant-table-tbody > tr.table-row-light) {
+  background-color: #ffffff;
+}
+
+.custom-table :deep(.ant-table-tbody > tr.table-row-dark) {
+  background-color: #f7faff;
+}
+
+.custom-table :deep(.ant-table-tbody > tr:hover > td) {
+  background-color: #e6f7ff !important;
+}
+
+.custom-table :deep(.ant-table-tbody > tr > td) {
+  padding: 16px;
+}
+
+.status-tag {
+  font-weight: medium;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.action-button {
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.task-modal :deep(.ant-modal-content) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.task-modal :deep(.ant-modal-header) {
+  background-color: #f9fafc;
+  padding: 16px 24px;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.task-modal :deep(.ant-modal-title) {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.task-modal :deep(.ant-modal-body) {
+  padding: 20px;
+}
+
+.task-modal :deep(.ant-modal-footer) {
+  border-top: 1px solid #eaeaea;
+  padding: 12px 24px;
+  background-color: #f9fafc;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .task-management {
+    padding: 12px;
+  }
+  
+  .filter-container,
+  .table-container {
+    padding: 16px;
+  }
+  
+  .header-title {
+    font-size: 1.25rem;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .add-task-button {
+    width: 100%;
+  }
 }
 </style>

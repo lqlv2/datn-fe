@@ -1,20 +1,78 @@
 <template>
-  <div>
-    <a-button v-if="authStore.userRole === 'ADMIN'"
-              style="
-        float: right;
-        margin-right: 16px;
-        background-color: saddlebrown;
-        color: aliceblue;
-      "
-              @click="showModal">Add Mentor
-    </a-button>
+  <div class="mentor-management">
+    <div class="page-header">
+      <h2 class="header-title">Mentor Management</h2>
+      
+      <a-button 
+        v-if="authStore.userRole === 'ADMIN'"
+        type="primary"
+        class="add-mentor-button"
+        @click="showModal"
+      >
+        <template #icon>
+          <PlusOutlined />
+        </template>
+        Add Mentor
+      </a-button>
+    </div>
 
+    <div class="filter-container">
+      <a-row :gutter="[24, 16]" align="middle">
+        <a-col :xs="24" :sm="12" :md="8" :lg="8">
+          <div class="filter-item">
+            <a-input
+              v-model:value="filters.name"
+              placeholder="Search by name..."
+              class="filter-input"
+              allowClear
+            />
+          </div>
+        </a-col>
+
+        <a-col :xs="24" :sm="12" :md="8" :lg="6">
+          <div class="filter-item">
+            <a-input
+              v-model:value="filters.position"
+              placeholder="Position"
+              class="filter-input"
+              allowClear
+            />
+          </div>
+        </a-col>
+
+        <a-col :xs="24" :sm="12" :md="8" :lg="6">
+          <div class="filter-item">
+            <a-button type="primary" class="search-button" @click="applyFilters">
+              <template #icon><search-outlined /></template>
+              Search
+            </a-button>
+          </div>
+        </a-col>
+      </a-row>
+    </div>
+
+    <div class="table-container">
+      <a-table
+        v-if="columns.length > 0 && mentors.length > 0"
+        :columns="columns"
+        :data-source="mentors"
+        :pagination="pagination"
+        @change="handlePaginationChange"
+        bordered
+        row-key="id"
+        :scroll="{ x: 1500, y: 500 }"
+        :row-class-name="(_record, index) => (index % 2 === 0 ? 'table-row-light' : 'table-row-dark')"
+        class="custom-table"
+      >
+      </a-table>
+    </div>
+
+    <!-- Modals -->
     <a-modal
-        v-model:open="open"
-        title="Add New Mentor"
-        @ok="handleSubmit"
-        @cancel="closeModal"
+      v-model:open="open"
+      title="Add New Mentor"
+      @ok="handleSubmit"
+      @cancel="closeModal"
     >
       <template #footer>
         <a-button key="back" @click="closeModal">Cancel</a-button>
@@ -25,7 +83,6 @@
         <a-row :gutter="16">
           <a-col :span="12">
             <a-form-item
-                style="width: 90%"
                 label="Full Name"
                 name="fullname"
                 :rules="[{ required: true, message: 'Please input name' }]"
@@ -38,7 +95,6 @@
           </a-col>
           <a-col :span="12">
             <a-form-item
-                style="width: 100%"
                 label="Email"
                 name="email"
                 :rules="[{ required: true, message: 'Please input email' }]"
@@ -48,11 +104,10 @@
           </a-col>
         </a-row>
 
-        <!-- Phone and Date of Birth -->
+        <!-- Phone and Position -->
         <a-row :gutter="16">
           <a-col :span="12">
             <a-form-item
-                style="width: 90%"
                 label="Phone"
                 name="phone"
                 :rules="[{ required: true, message: 'Please input phone' }]"
@@ -64,7 +119,7 @@
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item style="width: 90%" label="position" name="position">
+            <a-form-item label="Position" name="position">
               <a-input
                   v-model:value="form.position"
                   placeholder="Enter position"
@@ -76,10 +131,10 @@
     </a-modal>
 
     <a-modal
-        v-model:open="updateOpen"
-        title="Update Mentor"
-        @ok="handleUpdate"
-        @cancel="updateOpen.value = false"
+      v-model:open="updateOpen"
+      title="Update Mentor"
+      @ok="handleUpdate"
+      @cancel="updateOpen.value = false"
     >
       <template #footer>
         <a-button key="back" @click="updateOpen.value = false">Cancel</a-button>
@@ -90,7 +145,6 @@
         <a-row :gutter="16">
           <a-col :span="12">
             <a-form-item
-                style="width: 90%"
                 label="Full Name"
                 name="fullname"
             >
@@ -102,7 +156,6 @@
           </a-col>
           <a-col :span="12">
             <a-form-item
-                style="width: 100%"
                 label="Email"
                 name="email"
                 :rules="[{ required: true, message: 'Please input email' }]"
@@ -112,11 +165,10 @@
           </a-col>
         </a-row>
 
-        <!-- Phone and Date of Birth -->
+        <!-- Phone and Position -->
         <a-row :gutter="16">
           <a-col :span="12">
             <a-form-item
-                style="width: 90%"
                 label="Phone"
                 name="phone"
                 :rules="[{ required: true, message: 'Please input phone' }]"
@@ -128,7 +180,7 @@
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item style="width: 90%" label="Position" name="position">
+            <a-form-item label="Position" name="position">
               <a-input
                   v-model:value="updateForm.position"
                   placeholder="Enter position"
@@ -138,54 +190,21 @@
         </a-row>
       </a-form>
     </a-modal>
-
-    <h2 class="header-title">Mentor Management</h2>
-    <a-row gutter="16" style="margin-bottom: 16px">
-      <a-col span="6">
-        <a-input
-            v-model:value="filters.name"
-            placeholder="Name"
-            allowClear
-            style="width: 100%"
-        />
-      </a-col>
-
-      <a-col span="4">
-        <a-input
-            v-model:value="filters.position"
-            placeholder="Position"
-            style="width: 100%"
-        >
-        </a-input>
-      </a-col>
-
-      <a-button type="primary" style="margin-left: 8px" @click="applyFilters">Search</a-button>
-
-    </a-row>
-    <p></p>
-    <a-table
-        v-if="columns.length > 0 && mentors.length > 0"
-        :columns="columns"
-        :data-source="mentors"
-        :pagination="pagination"
-        @change="handlePaginationChange"
-        bordered
-        row-key="id"
-        :scroll="{ x: 1500, y: 500 }"
-        :row-class-name="(_record, index) => (index % 2 === 0 ? 'table-row-light' : 'table-row-dark')"
-        class="custom-table"
-    >
-    </a-table>
+    
+    <DeleteModal 
+      :on-cancel="cancelDelete" 
+      :on-delete="confirmDelete" 
+      :is-delete-modal-visible="isDeleteModalVisible"
+      message="Are you sure you want to delete this mentor?"
+    />
   </div>
-  <DeleteModal :on-cancel="cancelDelete" :on-delete="confirmDelete" :is-delete-modal-visible="isDeleteModalVisible"
-               message="Are you sure you want to delete this mentor?"/>
 </template>
 
 <script setup>
 import {computed, h, onMounted, reactive, ref} from "vue";
 import {useMentorStore} from "@/stores/mentorStore.js";
 import {useAuthStore} from "@/stores/authStore.js";
-import {DeleteOutlined, EditOutlined} from "@ant-design/icons-vue";
+import {DeleteOutlined, EditOutlined, PlusOutlined, SearchOutlined} from "@ant-design/icons-vue";
 import {updateMentor} from "@/services/mentorService.js";
 import {message} from "ant-design-vue";
 import DeleteModal from "@/components/DeleteModal.vue";
@@ -194,36 +213,39 @@ const authStore = useAuthStore();
 const mentorStore = useMentorStore();
 const columns = [
   {
-    title: "Mentor ID",
+    title: "ID",
     dataIndex: "id",
     key: "id",
+    align: 'center'
   },
   {
     title: "Full Name",
     dataIndex: "fullname",
     key: "fullname",
+    align: 'center'
   },
   {
     title: "Email",
     dataIndex: "email",
     key: "email",
+    align: 'center'
   },
   {
     title: "Phone",
     dataIndex: "phone",
     key: "phone",
+    align: 'center'
   },
   {
     title: "Position",
     dataIndex: "position",
     key: "position",
+    align: 'center'
   },
   {
     title: "Action",
     key: "action",
-    width: 100,
     align: "center",
-    fixed: "right",
     customRender: ({record}) => {
       return h(
           "span",
@@ -269,11 +291,9 @@ const {
 } = mentorStore;
 
 const mentors = computed(() => mentorStore.mentors);
-const unassignedInterns = computed(() => mentorStore.unassignedInterns);
 const currentPage = computed(() => mentorStore.currentPage);
 const totalElements = computed(() => mentorStore.totalElements);
 const selectedMentor = computed(() => mentorStore.selectedMentor);
-const openMentors = computed(() => mentorStore.openMentors);
 const addMentorForm = ref(null);
 const recommended = ref(false);
 const isDeleteModalVisible = ref(false);
@@ -289,10 +309,6 @@ const open = ref(false);
 const openAssign = ref(false);
 
 const selectedInterns = ref([]);
-
-const updateSelectedInterns = (keys) => {
-  selectedInterns.value = keys;
-};
 
 const handleEdit = (record) => {
   Object.assign(updateForm, record);
@@ -329,15 +345,6 @@ const innerPagination = ref({
   pageSize: 5,
 });
 
-function onPaginationChange(paginationData) {
-  innerPagination.value.current = paginationData.current;
-}
-
-const switchRecommned = () => {
-  selectedInterns.value = [];
-  fetchUnassignedInterns(selectedMentor.value.id, recommended.value);
-};
-
 const handlePaginationChange = (paginationConfig) => {
   pagination.pageSize = paginationConfig.pageSize;
   list(paginationConfig.current, pagination.pageSize);
@@ -360,10 +367,6 @@ const handleDelete = (record) => {
   isDeleteModalVisible.value = true;
 };
 
-const handleAssignIntern = () => {
-  assign(selectedMentor.value.id, selectedInterns.value);
-};
-
 const applyFilters = async () => {
   await list(currentPage.value, pagination.pageSize, filters.value);
 };
@@ -376,13 +379,6 @@ const showModal = () => {
 const closeModal = () => {
   addMentorForm.value?.resetFields();
   open.value = false;
-};
-
-const closeModalAssign = () => {
-  selectedInterns.value = [];
-  innerPagination.value.current = 1;
-  recommended.value = false;
-  openAssign.value = false;
 };
 
 const handleSubmit = async () => {
@@ -404,14 +400,76 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.mentor-management {
+  padding: 16px;
+  background-color: #f5f7fa;
+  border-radius: 8px;
+}
+
+.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eaeaea;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .header-title {
-  margin-left: 5px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.add-mentor-button {
+  background-color: #1890ff;
+  color: white;
+  border-radius: 6px;
+  font-weight: 500;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.filter-container {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+}
+
+.filter-item {
+  margin-bottom: 16px;
+}
+
+.filter-input {
+  width: 100%;
+  border-radius: 6px;
+}
+
+.search-button {
+  width: 100%;
+  height: 40px;
+  border-radius: 6px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.table-container {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .custom-table {
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .custom-table :deep(.ant-table) {
@@ -421,19 +479,24 @@ onMounted(async () => {
 .custom-table :deep(.ant-table-thead > tr > th) {
   background-color: #f0f5ff;
   font-weight: 600;
-  padding: 12px 16px;
+  padding: 16px;
+  color: #1f2937;
 }
 
-.table-row-light {
+.custom-table :deep(.ant-table-tbody > tr.table-row-light) {
   background-color: #ffffff;
 }
 
-.table-row-dark {
-  background-color: #fafafa;
+.custom-table :deep(.ant-table-tbody > tr.table-row-dark) {
+  background-color: #f7faff;
 }
 
 .custom-table :deep(.ant-table-tbody > tr:hover > td) {
   background-color: #e6f7ff !important;
+}
+
+.custom-table :deep(.ant-table-tbody > tr > td) {
+  padding: 16px;
 }
 
 /* Action icon styles with :deep() */
@@ -463,10 +526,29 @@ onMounted(async () => {
   background-color: rgba(255, 77, 79, 0.1);
 }
 
-/* Status tag styles */
-.custom-table :deep(.ant-tag) {
-  border-radius: 12px;
-  padding: 0 10px;
-  font-weight: 500;
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .mentor-management {
+    padding: 12px;
+  }
+  
+  .filter-container,
+  .table-container {
+    padding: 16px;
+  }
+  
+  .header-title {
+    font-size: 1.25rem;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .add-mentor-button {
+    width: 100%;
+  }
 }
 </style>

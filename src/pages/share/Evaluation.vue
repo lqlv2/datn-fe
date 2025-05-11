@@ -132,21 +132,25 @@ const columns = [
     title: 'Intern Name',
     dataIndex: 'internName',
     key: 'name',
+    align: "center"
   },
   {
     title: 'Mentor Name',
     dataIndex: 'mentorName',
     key: 'project',
+    align: "center"
   },
   {
     title: 'Start date',
     dataIndex: 'startDate',
     key: 'project',
+    align: "center"
   },
   {
     title: 'End date',
     dataIndex: 'endDate',
     key: 'project',
+    align: "center"
   },
 
   {
@@ -154,6 +158,7 @@ const columns = [
     dataIndex: 'averageScore',
     key: 'averageScore',
     slots: { customRender: 'averageScore' },
+    align: "center"
   },
   {
     title: 'Overall',
@@ -166,11 +171,13 @@ const columns = [
       { text: 'Poor', value: 'Poor' },
     ],
     slots: { customRender: 'status' },
+    align: "center"
   },
   {
     title: 'Actions',
     key: 'action',
     slots: { customRender: 'action' },
+    align: "center"
   },
 ];
 
