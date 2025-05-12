@@ -24,6 +24,7 @@ import {
   TeamOutlined,
   CrownOutlined,
   SettingOutlined,
+  ReadOutlined,
 } from "@ant-design/icons-vue";
 import {ref, computed, onMounted, watch} from "vue";
 import { useAuthStore } from "@/stores/authStore";
@@ -39,6 +40,7 @@ const menuItems = [
   { key: "4", label: "Admin", route: "/admin", icon: CrownOutlined, roles: ["MENTOR", 'INTERN']},
   { key: "2", label: "Intern", route: "/intern", icon: UserOutlined, roles: ["ADMIN", "MENTOR"]},
   { key: "3", label: "Mentor", route: "/mentor", icon: TeamOutlined, roles: ["ADMIN", 'INTERN']},
+  { key: "5", label: "Classes", route: "/classes", icon: ReadOutlined, roles: ["ADMIN"] },
   { key: "6", label: "Task", route: "/task", icon: ProfileOutlined, roles: ["ADMIN", "MENTOR", "INTERN"] },
   { key: "7", label: "Evaluation", route: "/evaluation", icon: FundOutlined, roles: ["ADMIN", "INTERN", "MENTOR"] }
 ];

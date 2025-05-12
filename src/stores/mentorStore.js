@@ -33,9 +33,6 @@ export const useMentorStore = defineStore('mentorStore', {
         this.mentors = response.data.data.data; // Assuming response structure matches
         this.currentPage = response.data.data.currentPage;
         this.totalElements = response.data.data.totalElements;
-        this.openMentors = response.data.data.data.filter(
-          (mentor) => mentor.open === true
-        );
       } catch (error) {
         console.error('Failed to list mentors:', error);
       }

@@ -1,0 +1,137 @@
+// Class service for handling class management API calls
+import axiosInstance from '@/plugins/axios';
+
+const API_PREFIX = '/api';
+
+export const fetchClasses = async (params = {}) => {
+  const response = await axiosInstance.get(`${API_PREFIX}/classes`, { params });
+  return response.data;
+};
+
+export const fetchClassById = async (id) => {
+  const response = await axiosInstance.get(`${API_PREFIX}/classes/${id}`);
+  return response.data;
+};
+
+export const fetchClassByCode = async (code) => {
+  const response = await axiosInstance.get(`${API_PREFIX}/classes/code/${code}`);
+  return response.data;
+};
+
+export const createClass = async (classData) => {
+  const formattedData = formatClassData(classData);
+  const response = await axiosInstance.post(`${API_PREFIX}/classes`, formattedData);
+  return response.data;
+};
+
+export const updateClass = async (id, classData) => {
+  const formattedData = formatClassData(classData);
+  const response = await axiosInstance.put(`${API_PREFIX}/classes/${id}`, formattedData);
+  return response.data;
+};
+
+export const deleteClass = async (id) => {
+  const response = await axiosInstance.delete(`${API_PREFIX}/classes/${id}`);
+  return response.data;
+};
+
+export const fetchClassInterns = async (classId) => {
+  const response = await axiosInstance.get(`${API_PREFIX}/classes/${classId}/interns`);
+  return response.data;
+};
+
+export const addInternToClass = async (classId, internId) => {
+  const response = await axiosInstance.post(`${API_PREFIX}/classes/${classId}/interns/${internId}`);
+  return response.data;
+};
+
+export const removeInternFromClass = async (classId, internId) => {
+  const response = await axiosInstance.delete(`${API_PREFIX}/classes/${classId}/interns/${internId}`);
+  return response.data;
+};
+
+// Helper functions to format data
+const formatClassData = (classData) => {
+  const formattedData = { ...classData };
+  
+  // Format dates and times for the API
+  if (formattedData.startDate && typeof formattedData.startDate !== 'string') {
+    formattedData.startDate = formattedData.startDate.toISOString();
+  }
+  
+  if (formattedData.endDate && typeof formattedData.endDate !== 'string') {
+    formattedData.endDate = formattedData.endDate.toISOString();
+  }
+  
+  if (formattedData.startTime && typeof formattedData.startTime !== 'string') {
+    formattedData.startTime = formattedData.startTime.format('HH:mm');
+  }
+  
+  if (formattedData.endTime && typeof formattedData.endTime !== 'string') {
+    formattedData.endTime = formattedData.endTime.format('HH:mm');
+  }
+  
+  return formattedData;
+};
+
+// Document related endpoints
+export const uploadClassDocument = async (classId, documentData) => {
+  const formData = new FormData();
+  formData.append('file', documentData.file);
+  formData.append('title', documentData.title);
+  formData.append('description', documentData.description);
+  formData.append('type', documentData.type);
+  
+  const response = await axiosInstance.post(`${API_PREFIX}/classes/${classId}/documents`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+};
+
+export const fetchClassDocuments = async (classId) => {
+  const response = await axiosInstance.get(`${API_PREFIX}/classes/${classId}/documents`);
+  return response.data;
+};
+
+export const deleteClassDocument = async (classId, documentId) => {
+  const response = await axiosInstance.delete(`${API_PREFIX}/classes/${classId}/documents/${documentId}`);
+  return response.data;
+};
+
+export const downloadClassDocument = async (classId, documentId) => {
+  const response = await axiosInstance.get(`${API_PREFIX}/classes/${classId}/documents/${documentId}/download`, {
+    responseType: 'blob',
+  });
+  return response;
+};
+
+// Test related endpoints
+export const fetchTests = async (classId) => {
+  const response = await axiosInstance.get(`${API_PREFIX}/classes/${classId}/tests`);
+  return response.data;
+};
+
+export const fetchTestById = async (classId, testId) => {
+  const response = await axiosInstance.get(`${API_PREFIX}/classes/${classId}/tests/${testId}`);
+  return response.data;
+};
+
+export const createTest = async (classId, testData) => {
+  const response = await axiosInstance.post(`${API_PREFIX}/classes/${classId}/tests`, testData);
+  return response.data;
+};
+
+export const updateTest = async (classId, testId, testData) => {
+  const response = await axiosInstance.put(`${API_PREFIX}/classes/${classId}/tests/${testId}`, testData);
+  return response.data;
+};
+
+export const deleteTest = async (classId, testId) => {
+  const response = await axiosInstance.delete(`${API_PREFIX}/classes/${classId}/tests/${testId}`);
+  return response.data;
+};
+
+export const fetchClassStatistics = async (classId) => {
+  const response = await axiosInstance.get(`${API_PREFIX}/classes/${classId}/statistics`);
+  return response.data;
+};

@@ -7,6 +7,8 @@ const PAGES = {
   UNAUTHORIZED: '/unauthorized',
   ACCOUNT: '/account',
   INTERN: '/intern',
+  CLASSES: '/classes',
+  CLASS_DETAIL: '/classes/:id',
 };
 
 export default PAGES;

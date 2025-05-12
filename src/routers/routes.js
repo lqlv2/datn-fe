@@ -21,6 +21,8 @@ import EvaluationDetail from "@/pages/share/EvaluationDetail.vue";
 import Mentor2 from "@/pages/intern/Mentor2.vue";
 import AdminIntern from "@/pages/intern/AdminIntern.vue";
 import {getCurrentUserRole} from "@/util/Functions.js";
+import ClassManagement from '@/pages/admin/ClassManagement.vue';
+import ClassDetail from '@/pages/admin/ClassDetail.vue';
 
 const routes = [
     {path: PAGES.LOGIN, component: Login},
@@ -87,10 +89,17 @@ const routes = [
             {
                 path: 'evaluation',
                 component: Evaluation,
-            },
-            {
+            },            {
                 path: 'evaluation/:id',
                 component: EvaluationDetail,
+            },
+            {
+                path: 'classes',
+                component: ClassManagement,
+            },
+            {
+                path: 'classes/:id',
+                component: ClassDetail,
             }
         ]
     },
