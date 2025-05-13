@@ -13,6 +13,7 @@ import {createRouter, createWebHistory} from 'vue-router';
 import TaskDetail from '@/pages/intern/TaskDetail.vue';
 import TaskDetailMentor from '@/pages/mentor/TaskDetailMentor.vue';
 import TaskDetailAdmin from '@/pages/admin/TaskDetailAdmin.vue';
+import TestDetail from '@/pages/admin/TestDetail.vue';
 import Evaluation from '@/pages/share/Evaluation.vue';
 import Intern2 from "@/pages/mentor/Intern2.vue";
 import Task2 from "@/pages/intern/Task2.vue";
@@ -23,6 +24,11 @@ import AdminIntern from "@/pages/intern/AdminIntern.vue";
 import {getCurrentUserRole} from "@/util/Functions.js";
 import ClassManagement from '@/pages/admin/ClassManagement.vue';
 import ClassDetail from '@/pages/admin/ClassDetail.vue';
+import InternClasses from '@/pages/intern/InternClasses.vue';
+import InternClassDetail from '@/pages/intern/InternClassDetail.vue';
+import InternSchedule from '@/pages/intern/InternSchedule.vue';
+import InternTests from '@/pages/intern/InternTests.vue';
+import InternTestDetail from '@/pages/intern/InternTestDetail.vue';
 
 const routes = [
     {path: PAGES.LOGIN, component: Login},
@@ -100,6 +106,10 @@ const routes = [
             {
                 path: 'classes/:id',
                 component: ClassDetail,
+            },
+            {
+                path: 'tests/:id',
+                component: TestDetail,
             }
         ]
     },
@@ -125,6 +135,26 @@ const routes = [
             {
                 path: 'evaluation',
                 component: EvaluationDetail,
+            },
+            {
+                path: 'classes',
+                component: InternClasses,
+            },
+            {
+                path: 'classes/:id',
+                component: InternClassDetail,
+            },
+            {
+                path: 'schedule',
+                component: InternSchedule,
+            },
+            {
+                path: 'tests',
+                component: InternTests,
+            },
+            {
+                path: 'tests/:id',
+                component: InternTestDetail,
             }
         ]
     },

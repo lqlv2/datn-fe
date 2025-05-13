@@ -7,6 +7,7 @@ import '@ant-design/icons';
 import router from './routers/routes';
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
+
 const app = createApp(App);
 import moment from 'moment';
 import 'moment/locale/zh-cn'; // or your preferred locale

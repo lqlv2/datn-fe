@@ -25,6 +25,8 @@ import {
   CrownOutlined,
   SettingOutlined,
   ReadOutlined,
+  CalendarOutlined,
+  FormOutlined
 } from "@ant-design/icons-vue";
 import {ref, computed, onMounted, watch} from "vue";
 import { useAuthStore } from "@/stores/authStore";
@@ -42,7 +44,10 @@ const menuItems = [
   { key: "3", label: "Mentor", route: "/mentor", icon: TeamOutlined, roles: ["ADMIN", 'INTERN']},
   { key: "5", label: "Classes", route: "/classes", icon: ReadOutlined, roles: ["ADMIN"] },
   { key: "6", label: "Task", route: "/task", icon: ProfileOutlined, roles: ["ADMIN", "MENTOR", "INTERN"] },
-  { key: "7", label: "Evaluation", route: "/evaluation", icon: FundOutlined, roles: ["ADMIN", "INTERN", "MENTOR"] }
+  { key: "7", label: "Evaluation", route: "/evaluation", icon: FundOutlined, roles: ["ADMIN", "INTERN", "MENTOR"] },
+  { key: "8", label: "My Classes", route: "/classes", icon: ReadOutlined, roles: ["INTERN"] },
+  { key: "9", label: "Schedule", route: "/schedule", icon: CalendarOutlined, roles: ["INTERN"] },
+  { key: "10", label: "Tests", route: "/tests", icon: FormOutlined, roles: ["INTERN"] }
 ];
 
 const filteredMenuItems = computed(() => {

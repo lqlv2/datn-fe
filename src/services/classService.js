@@ -40,6 +40,11 @@ export const fetchClassInterns = async (classId) => {
   return response.data;
 };
 
+export const fetchInternsNotInClass = async (classId) => {
+  const response = await axiosInstance.get(`${API_PREFIX}/classes/${classId}/interns-not-in-class`);
+  return response.data;
+};
+
 export const addInternToClass = async (classId, internId) => {
   const response = await axiosInstance.post(`${API_PREFIX}/classes/${classId}/interns/${internId}`);
   return response.data;
@@ -103,32 +108,6 @@ export const downloadClassDocument = async (classId, documentId) => {
     responseType: 'blob',
   });
   return response;
-};
-
-// Test related endpoints
-export const fetchTests = async (classId) => {
-  const response = await axiosInstance.get(`${API_PREFIX}/classes/${classId}/tests`);
-  return response.data;
-};
-
-export const fetchTestById = async (classId, testId) => {
-  const response = await axiosInstance.get(`${API_PREFIX}/classes/${classId}/tests/${testId}`);
-  return response.data;
-};
-
-export const createTest = async (classId, testData) => {
-  const response = await axiosInstance.post(`${API_PREFIX}/classes/${classId}/tests`, testData);
-  return response.data;
-};
-
-export const updateTest = async (classId, testId, testData) => {
-  const response = await axiosInstance.put(`${API_PREFIX}/classes/${classId}/tests/${testId}`, testData);
-  return response.data;
-};
-
-export const deleteTest = async (classId, testId) => {
-  const response = await axiosInstance.delete(`${API_PREFIX}/classes/${classId}/tests/${testId}`);
-  return response.data;
 };
 
 export const fetchClassStatistics = async (classId) => {

@@ -136,6 +136,20 @@ export const useClassStore = defineStore('class', {
       }
     },
 
+    async fetchInternsNotInClass(classId) {
+      try {
+        this.loading = true;
+        const response = await classService.fetchInternsNotInClass(classId);
+        return response.data;
+      } catch (error) {
+        this.error = error.message;
+        message.error('Failed to fetch available interns');
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
     async addInternToClass(classId, internId) {
       try {
         this.loading = true;
@@ -246,7 +260,7 @@ export const useClassStore = defineStore('class', {
         this.loading = true;
         const response = await classService.fetchClassStatistics(classId);
         this.statistics = response.data;
-        return response;
+        return response.data;
       } catch (error) {
         this.error = error.message;
         message.error('Failed to fetch class statistics');

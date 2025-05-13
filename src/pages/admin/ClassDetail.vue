@@ -147,12 +147,12 @@
             class="custom-table"
             bordered
           >
-            <template #title="{ text }">
-              <a @click="handleViewTest(text.record)">{{ text }}</a>
+            <template #title="{ record, text }">
+              <a @click="handleViewTest(record)">{{ text }}</a>
             </template>
             
             <template #status="{ text }">
-              <a-tag :color="getTestStatusColor(text)">{{ text }}</a-tag>
+              <a-tag :color="getTestStatusColor(text)">{{ text === true ? 'Published' : 'Unpublished' }}</a-tag>
             </template>
             
             <template #action="{ record }">
@@ -299,7 +299,6 @@
                 v-for="intern in availableInterns" 
                 :key="intern.id" 
                 :value="intern.id"
-                :disabled="isInternInClass(intern.id)"
               >
                 {{ intern.fullname }} ({{ intern.email }})
               </a-select-option>
@@ -363,29 +362,20 @@
             <a-input v-model:value="testForm.title" placeholder="Enter test title" />
           </a-form-item>
           
-          <a-form-item label="Test Date" name="date">
-            <a-date-picker v-model:value="testForm.date" style="width: 100%" format="YYYY-MM-DD" />
+          <a-form-item label="Test Duration (minutes)" name="durationMinutes">
+            <a-input-number v-model:value="testForm.durationMinutes" :min="1" style="width: 100%" />
           </a-form-item>
           
-          <a-row :gutter="16">
-            <a-col :span="12">
-              <a-form-item label="Duration (minutes)" name="duration">
-                <a-input-number v-model:value="testForm.duration" :min="1" style="width: 100%" />
-              </a-form-item>
-            </a-col>
-            <a-col :span="12">
-              <a-form-item label="Maximum Score" name="maxScore">
-                <a-input-number v-model:value="testForm.maxScore" :min="1" :max="100" style="width: 100%" />
-              </a-form-item>
-            </a-col>
-          </a-row>
+          <a-form-item label="Passing Score" name="passingScore">
+            <a-input-number v-model:value="testForm.passingScore" :min="1" :max="100" style="width: 100%" />
+          </a-form-item>
           
-          <a-form-item label="Status" name="status">
-            <a-select v-model:value="testForm.status">
-              <a-select-option value="SCHEDULED">Scheduled</a-select-option>
-              <a-select-option value="IN_PROGRESS">In Progress</a-select-option>
-              <a-select-option value="COMPLETED">Completed</a-select-option>
-            </a-select>
+          <a-form-item label="Status" name="isPublished">
+            <a-switch 
+              v-model:checked="testForm.isPublished" 
+              :checked-children="'Published'" 
+              :un-checked-children="'Unpublished'"
+            />
           </a-form-item>
           
           <a-form-item label="Description" name="description">
@@ -403,6 +393,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useClassStore } from '@/stores/classStore';
 import { useMentorStore } from '@/stores/mentorStore';
 import { useInternStore } from '@/stores/internStore';
+import { useTestStore } from '@/stores/testStore';
 import { 
   ArrowLeftOutlined, EyeOutlined, EditOutlined, DeleteOutlined, 
   PlusOutlined, UserAddOutlined, TrophyOutlined, CheckCircleOutlined, CalendarOutlined, UploadOutlined, DownloadOutlined
@@ -431,11 +422,12 @@ const router = useRouter();
 const classStore = useClassStore();
 const mentorStore = useMentorStore();
 const internStore = useInternStore();
+const testStore = useTestStore();
 
 // Data & state
 const classDetail = ref({});
 const mentors = ref([]);
-const allInterns = ref([]);
+const availableInterns = ref([]);
 const tests = ref([]);
 const classDocuments = ref([]);
 const statistics = ref({
@@ -475,11 +467,10 @@ const addInternsForm = reactive({
 const testForm = reactive({
   id: null,
   title: '',
-  date: null,
-  duration: 60,
   description: '',
-  maxScore: 10,
-  status: 'SCHEDULED'
+  durationMinutes: 60,
+  passingScore: 70,
+  isPublished: false
 });
 
 const documentForm = reactive({
@@ -539,30 +530,31 @@ const testColumns = [
     slots: { customRender: 'title' }
   },
   {
-    title: 'Date',
-    dataIndex: 'date',
-    align: 'center',
-    key: 'date',
-  },
-  {
-    title: 'Duration',
-    dataIndex: 'duration',
-    key: 'duration',
+    title: 'Duration (min)',
+    dataIndex: 'durationMinutes',
+    key: 'durationMinutes',
     align: 'center',
     render: (text) => `${text} min`,
   },
   {
+    title: 'Passing Score',
+    dataIndex: 'passingScore',
+    key: 'passingScore',
+    align: 'center',
+  },
+  {
     title: 'Status',
-    dataIndex: 'status',
-    key: 'status',
+    dataIndex: 'isPublished',
+    key: 'isPublished',
     align: 'center',
     slots: { customRender: 'status' }
   },
   {
-    title: 'Max Score',
-    dataIndex: 'maxScore',
-    key: 'maxScore',
+    title: 'Created At',
+    dataIndex: 'createdAt',
+    key: 'createdAt',
     align: 'center',
+    render: (text) => text ? dayjs(text).format('YYYY-MM-DD HH:mm') : '',
   },
   {
     title: 'Avg. Score',
@@ -647,18 +639,11 @@ const documentPagination = reactive({
 
 const testRules = {
   title: [{ required: true, message: 'Please enter the test title', trigger: 'blur' }],
-  date: [{ required: true, message: 'Please select a date', trigger: 'change' }],
-  duration: [{ required: true, message: 'Please enter the duration', trigger: 'blur' }],
-  maxScore: [{ required: true, message: 'Please enter the maximum score', trigger: 'blur' }],
-  status: [{ required: true, message: 'Please select a status', trigger: 'change' }],
+  durationMinutes: [{ required: true, message: 'Please enter the duration', trigger: 'blur' }],
+  passingScore: [{ required: true, message: 'Please enter the passing score', trigger: 'blur' }],
 };
 
 // Computed properties
-const availableInterns = computed(() => {
-  const currentInternIds = new Set((classDetail.value.interns || []).map(intern => intern.id));
-  return allInterns.value.filter(intern => !currentInternIds.has(intern.id));
-});
-
 const renderedDetailedDescription = computed(() => {
   // You can use a Markdown library here if you want to support markdown
   return classDetail.value.detailedDescription || '';
@@ -674,15 +659,15 @@ onMounted(async () => {
     await Promise.all([
       fetchClassDetails(classId),
       fetchInternsByClass(classId),
+      fetchAvailableInterns(classId),
       fetchTests(classId),
       fetchStatistics(classId),
       fetchMentors(),
-      fetchAllInterns(),
       fetchClassDocuments(classId)
     ]);
     
     // Setup charts after data is loaded
-    nextTick(() => {
+    await nextTick(() => {
       initCharts();
     });
   } catch (error) {
@@ -716,30 +701,31 @@ const fetchMentors = async () => {
   }
 };
 
-const fetchInterns = async () => {
-  try {
-    await internStore.filterStoreInterns(1, 10000, {}, false);
-    allInterns.value = internStore.interns || [];
-  } catch (error) {
-    console.error('Error fetching interns:', error);
-  }
-};
-
 const fetchInternsByClass = async (classId) => {
   try {
     const response = await classStore.fetchClassInterns(classId);
     if (classDetail.value) {
-      classDetail.value.interns = response.data || [];
+      classDetail.value.interns = response || [];
     }
   } catch (error) {
     console.error('Error fetching class interns:', error);
   }
 };
 
+const fetchAvailableInterns = async (classId) => {
+  try {
+    const response = await classStore.fetchInternsNotInClass(classId);
+    availableInterns.value = response || [];
+  } catch (error) {
+    console.error('Error fetching available interns:', error);
+  }
+};
+
 const fetchTests = async (classId) => {
   try {
-    await classStore.fetchTests(classId);
-    tests.value = classStore.tests;
+    const response = await testStore.fetchTestsByClassId(classId);
+    console.log(response);
+    tests.value = response || [];
   } catch (error) {
     console.error('Error fetching tests:', error);
   }
@@ -748,8 +734,8 @@ const fetchTests = async (classId) => {
 const fetchStatistics = async (classId) => {
   try {
     const response = await classStore.fetchClassStatistics(classId);
-    if (response && response.data) {
-      statistics.value = response.data;
+    if (response) {
+      statistics.value = response;
     } else {
       // If no statistics available, create empty structure
       statistics.value = {
@@ -808,8 +794,10 @@ const handleAssignMentor = async () => {
   }
 };
 
-const showAddInternsModal = () => {
+const showAddInternsModal = async () => {
   addInternsForm.internIds = [];
+  // Refresh available interns
+  await fetchAvailableInterns(classDetail.value.id);
   addInternsModalVisible.value = true;
 };
 
@@ -826,8 +814,13 @@ const handleAddInterns = async () => {
       await classStore.addInternToClass(classDetail.value.id, internId);
     }
     
-    // Refresh class interns
-    await fetchInternsByClass(classDetail.value.id);
+    // Refresh class interns and available interns
+    await Promise.all([
+      fetchClassDetails(classDetail.value.id),
+      fetchInternsByClass(classDetail.value.id),
+      fetchAvailableInterns(classDetail.value.id)
+    ]);
+    
     addInternsModalVisible.value = false;
     message.success(`${addInternsForm.internIds.length} interns added to class`);
   } catch (error) {
@@ -848,8 +841,11 @@ const showRemoveInternConfirm = (intern) => {
     async onOk() {
       try {
         await classStore.removeInternFromClass(classDetail.value.id, intern.id);
-        // Refresh class interns
-        await fetchInternsByClass(classDetail.value.id);
+        // Refresh class interns and available interns
+        await Promise.all([
+          fetchInternsByClass(classDetail.value.id),
+          fetchAvailableInterns(classDetail.value.id)
+        ]);
         message.success('Intern removed successfully');
       } catch (error) {
         console.error('Error removing intern:', error);
@@ -870,11 +866,10 @@ const handleEditTest = (record) => {
   
   testForm.id = record.id;
   testForm.title = record.title;
-  testForm.date = record.date ? dayjs(record.date) : null;
-  testForm.duration = record.duration;
   testForm.description = record.description || '';
-  testForm.maxScore = record.maxScore;
-  testForm.status = record.status;
+  testForm.durationMinutes = record.durationMinutes;
+  testForm.passingScore = record.passingScore;
+  testForm.isPublished = record.isPublished;
   
   testModalVisible.value = true;
 };
@@ -887,16 +882,15 @@ const handleSaveTest = () => {
       const formattedData = {
         title: testForm.title,
         description: testForm.description,
-        date: testForm.date ? dayjs(testForm.date).format('YYYY-MM-DD') : null,
-        duration: testForm.duration,
-        maxScore: testForm.maxScore,
-        status: testForm.status
+        durationMinutes: testForm.durationMinutes,
+        passingScore: testForm.passingScore,
+        isPublished: Boolean(testForm.isPublished)
       };
       
       if (editTestMode.value && testForm.id) {
-        await classStore.updateTest(classDetail.value.id, testForm.id, formattedData);
+        await testStore.updateTest(classDetail.value.id, testForm.id, formattedData);
       } else {
-        await classStore.createTest(classDetail.value.id, formattedData);
+        await testStore.createTest(classDetail.value.id, formattedData);
       }
       
       await fetchTests(classDetail.value.id);
@@ -917,15 +911,15 @@ const handleSaveTest = () => {
 const resetTestForm = () => {
   testForm.id = null;
   testForm.title = '';
-  testForm.date = null;
-  testForm.duration = 60;
   testForm.description = '';
-  testForm.maxScore = 10;
-  testForm.status = 'SCHEDULED';
+  testForm.durationMinutes = 60;
+  testForm.passingScore = 70;
+  testForm.isPublished = false;
 };
 
 const handleViewTest = (record) => {
-  router.push(`/admin/class/${classDetail.value.id}/test/${record.id}`);
+  console.log(record);
+  router.push(`/admin/tests/${record.id}`);
 };
 
 const showDeleteTestConfirm = (test) => {
@@ -937,7 +931,7 @@ const showDeleteTestConfirm = (test) => {
     cancelText: 'No',
     async onOk() {
       try {
-        await classStore.deleteTest(classDetail.value.id, test.id);
+        await testStore.deleteTest(classDetail.value.id, test.id);
         await fetchTests(classDetail.value.id);
         message.success('Test deleted successfully');
       } catch (error) {
@@ -1193,13 +1187,15 @@ const getStatusColor = (status) => {
 };
 
 const getTestStatusColor = (status) => {
+  if (typeof status === 'boolean') {
+    return status ? 'green' : 'orange';
+  }
+  
   switch (status) {
-    case 'SCHEDULED':
-      return 'blue';
-    case 'IN_PROGRESS':
-      return 'orange';
-    case 'COMPLETED':
+    case true:
       return 'green';
+    case false:
+      return 'orange';
     default:
       return 'default';
   }
