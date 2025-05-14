@@ -274,10 +274,15 @@ const refreshData = async () => {
 
 const fetchData = async () => {
   try {
+    console.log('Fetching intern classes data, user ID:', currentUserId.value);
     await Promise.all([
       internClassStore.fetchInternClasses(currentUserId.value),
       internClassStore.fetchAvailableClasses(currentUserId.value)
     ]);
+    console.log('Successfully fetched class data:', {
+      internClasses: internClassStore.internClasses.length,
+      availableClasses: internClassStore.availableClasses.length
+    });
   } catch (error) {
     console.error('Error fetching data:', error);
     message.error('Failed to load classes');

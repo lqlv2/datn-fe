@@ -31,7 +31,18 @@
             <a-descriptions-item label="Passing Score">{{ test?.passingScore || 0 }}%</a-descriptions-item>
             <a-descriptions-item label="Total Questions">{{ testQuestions.length }}</a-descriptions-item>
             <a-descriptions-item label="Test Type">Multiple Choice</a-descriptions-item>
+            <a-descriptions-item v-if="hasScheduledPeriod" label="Available Period" :span="2">
+              {{ formatDateTime(test.scheduledStartTime) }} - {{ formatDateTime(test.scheduledEndTime) }}
+            </a-descriptions-item>
           </a-descriptions>
+          
+          <div v-if="hasScheduledPeriod && !isTestAvailable" class="scheduled-alert">
+            <a-alert 
+              :type="isTestStarted ? 'error' : 'warning'" 
+              :message="scheduledTimeMessage" 
+              banner 
+            />
+          </div>
           
           <div class="test-description" v-if="test?.description">
             <h3>Description</h3>
@@ -46,12 +57,18 @@
               <li>You have {{ test?.durationMinutes || 0 }} minutes to complete the test.</li>
               <li>Once you start the test, the timer will begin and cannot be paused.</li>
               <li>You must achieve {{ test?.passingScore || 0 }}% or higher to pass.</li>
+              <li v-if="hasScheduledPeriod">This test is only available from {{ formatDateTime(test.scheduledStartTime) }} to {{ formatDateTime(test.scheduledEndTime) }}.</li>
               <li>Click "Start Test" when you are ready to begin.</li>
             </ul>
           </div>
           
           <div class="test-actions">
-            <a-button type="primary" size="large" @click="startTest" :disabled="testQuestions.length === 0">
+            <a-button 
+              type="primary" 
+              size="large" 
+              @click="startTest" 
+              :disabled="testQuestions.length === 0 || (hasScheduledPeriod && !isTestAvailable)"
+            >
               Start Test
             </a-button>
           </div>
@@ -306,6 +323,23 @@ const unansweredCount = computed(() => {
   return testQuestions.value.filter(q => !answers[q.id]).length;
 });
 
+const hasScheduledPeriod = computed(() => {
+  return test.value && test.value.scheduledStartTime && test.value.scheduledEndTime;
+});
+
+const isTestAvailable = computed(() => {
+  const now = new Date();
+  const scheduledStartTime = new Date(test.value.scheduledStartTime);
+  const scheduledEndTime = new Date(test.value.scheduledEndTime);
+  return now >= scheduledStartTime && now <= scheduledEndTime;
+});
+
+const scheduledTimeMessage = computed(() => {
+  if (!hasScheduledPeriod.value) return '';
+  if (!isTestAvailable.value) return 'This test is not available for taking.';
+  return 'This test is available for taking.';
+});
+
 onMounted(async () => {
   if (testId.value && currentUserId.value) {
     await fetchData();
@@ -319,31 +353,34 @@ onBeforeUnmount(() => {
 const fetchData = async () => {
   loading.value = true;
   try {
+    console.log('Fetching test data for test ID:', testId.value, 'and user ID:', currentUserId.value);
+    
     // Fetch test details
     const testResponse = await internClassStore.fetchTestById(testId.value);
     test.value = testResponse.data;
+    console.log('Test data loaded:', test.value);
     
     // Fetch test questions
     const questionsResponse = await testQuestionStore.fetchTestQuestionsByTestId(testId.value);
     testQuestions.value = questionsResponse.data || [];
+    console.log('Test questions loaded:', testQuestions.value.length);
     
     // Try to fetch test result (may not exist if test not taken yet)
     try {
+      console.log('Checking for existing test result...');
       const resultResponse = await internClassStore.fetchTestResultByIntern(testId.value, currentUserId.value);
       if (resultResponse && resultResponse.data) {
         testResult.value = resultResponse.data;
-        
-        // If viewing results directly from URL, switch to results view
-        if (isViewingResults.value) {
-          // We're already in results view due to the computed property
-        }
+        console.log('Existing test result found:', testResult.value);
       }
     } catch (error) {
-      console.log('No test result found - test not taken yet');
+      // No result found is expected for new tests, not an error condition
+      console.log('No previous test result found - test not taken yet');
+      testResult.value = null;
     }
   } catch (error) {
     console.error('Error fetching test data:', error);
-    message.error('Failed to load test data');
+    message.error('Failed to load test data. Please try again.');
   } finally {
     loading.value = false;
   }
@@ -439,16 +476,40 @@ const submitTest = async (timeExpired = false) => {
       }
     }
     
+    console.log('Submitting test with answers:', answersPayload);
+    
+    if (Object.keys(answersPayload).length === 0) {
+      // Add warning for empty answers, but still allow submission
+      message.warning('You are submitting without answering any questions.');
+    }
+    
     // Submit the test
     const response = await internClassStore.submitTest(testId.value, currentUserId.value, answersPayload);
     
     if (response && response.data) {
       testResult.value = response.data;
+      console.log('Test submitted successfully, result:', testResult.value);
+      completionModalVisible.value = true;
+      message.success('Test submitted successfully!');
+    } else {
+      message.warning('Test submitted but no result was returned. Please check the results page.');
+      // Still show completion modal, even though there might be an issue
       completionModalVisible.value = true;
     }
   } catch (error) {
     console.error('Error submitting test:', error);
-    message.error('Failed to submit test');
+    
+    // Show a detailed error message based on the error type
+    if (error.response && error.response.status === 404) {
+      message.error('Test not found or no longer available.');
+    } else if (error.response && error.response.status === 400) {
+      message.error('Invalid test submission. Please check your answers.');
+    } else {
+      message.error('Failed to submit test. Please try again or contact support.');
+    }
+    
+    // Keep the test open so user can try submitting again
+    startTimer(); // Resume the timer
   } finally {
     loading.value = false;
   }
@@ -491,6 +552,11 @@ const goToAllTests = () => {
 };
 
 const formatDate = (dateString) => {
+  if (!dateString) return 'N/A';
+  return new Date(dateString).toLocaleString();
+};
+
+const formatDateTime = (dateString) => {
   if (!dateString) return 'N/A';
   return new Date(dateString).toLocaleString();
 };
@@ -630,5 +696,9 @@ const formatDate = (dateString) => {
   padding: 12px;
   background-color: #f9f9f9;
   border-radius: 4px;
+}
+
+.scheduled-alert {
+  margin-top: 20px;
 }
 </style> 

@@ -3,7 +3,7 @@
     <Header />
     <a-layout>
       <SideNav v-if="isAuthenticated" />
-      <a-layout-content style="flex: 1; min-height: 100vh">
+      <a-layout-content style="min-height: 100vh">
         <router-view />
       </a-layout-content>
     </a-layout>

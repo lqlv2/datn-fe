@@ -29,6 +29,13 @@
         <a-descriptions-item label="Duration">{{ test?.durationMinutes }} minutes</a-descriptions-item>
         <a-descriptions-item label="Passing Score">{{ test?.passingScore }}</a-descriptions-item>
         <a-descriptions-item label="Published">{{ test?.isPublished ? 'Yes' : 'No' }}</a-descriptions-item>
+        <a-descriptions-item label="Scheduled Period">
+          <template v-if="test?.scheduledStartTime && test?.scheduledEndTime">
+            {{ dayjs(test.scheduledStartTime).format('YYYY-MM-DD HH:mm') }} - 
+            {{ dayjs(test.scheduledEndTime).format('YYYY-MM-DD HH:mm') }}
+          </template>
+          <template v-else>Any time</template>
+        </a-descriptions-item>
         <a-descriptions-item label="Created At">{{ test?.createdAt ? dayjs(test.createdAt).format('YYYY-MM-DD HH:mm') : '-' }}</a-descriptions-item>
       </a-descriptions>
     </a-card>

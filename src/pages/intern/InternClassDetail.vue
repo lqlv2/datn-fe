@@ -208,6 +208,16 @@ const testColumns = [
     key: 'status',
   },
   {
+    title: 'Scheduled Period',
+    key: 'scheduledPeriod',
+    customRender: ({ record }) => {
+      if (record.scheduledStartTime && record.scheduledEndTime) {
+        return `${formatDate(record.scheduledStartTime)} - ${formatDate(record.scheduledEndTime)}`;
+      }
+      return 'Any time';
+    }
+  },
+  {
     title: 'Action',
     key: 'action',
   },
@@ -248,6 +258,15 @@ const goBack = () => {
 };
 
 const goToTest = (testId) => {
+  const test = classTests.value.find(t => t.id === testId);
+  if (test && !isTestAvailable(test)) {
+    if (test.scheduledStartTime && new Date() < new Date(test.scheduledStartTime)) {
+      message.warning(`This test is not available yet. It starts at ${formatDate(test.scheduledStartTime)}`);
+    } else if (test.scheduledEndTime && new Date() > new Date(test.scheduledEndTime)) {
+      message.warning(`This test is no longer available. It ended at ${formatDate(test.scheduledEndTime)}`);
+    }
+    return;
+  }
   router.push(`/intern/tests/${testId}`);
 };
 
@@ -314,6 +333,24 @@ const getInitials = (name) => {
     .join('')
     .toUpperCase()
     .substring(0, 2);
+};
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return 'N/A';
+  const date = new Date(dateStr);
+  return date.toLocaleString();
+};
+
+const isTestAvailable = (test) => {
+  if (!test.scheduledStartTime || !test.scheduledEndTime) {
+    return true; // Test is available anytime
+  }
+  
+  const now = new Date();
+  const start = new Date(test.scheduledStartTime);
+  const end = new Date(test.scheduledEndTime);
+  
+  return now >= start && now <= end;
 };
 </script>
 

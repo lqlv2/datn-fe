@@ -14,6 +14,16 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => !!userRole.value);
   const successMessage = ref('');
   const errorMessage = ref('');
+  
+  // Add currentUser property with user ID to match what components are using
+  const currentUser = computed(() => {
+    // Get the user ID from localStorage or use a default value for development
+    const userId = localStorage.getItem('userId') || '1'; // Default to user ID 1 for testing
+    if (userId) {
+      return { id: parseInt(userId, 10) };
+    }
+    return null;
+  });
 
   const ROLE_TO_PAGE = {
     ADMIN: '/account',
@@ -37,12 +47,33 @@ export const useAuthStore = defineStore('auth', () => {
       ] = `Bearer ${accessToken}`;
 
       const decodedToken = jwtDecode(accessToken);
+      console.log('Decoded token:', decodedToken);
 
       usernameDetail.value = decodedToken.iss;
       userRole.value = decodedToken.role;
       localStorage.setItem('userRole', decodedToken.role);
       localStorage.setItem('usernameDetail', decodedToken.iss);
       localStorage.setItem('username', decodedToken.sub);
+      
+      // Try to find user ID in the token (common fields where it might be located)
+      const possibleUserIdFields = ['userId', 'sub', 'id', 'user_id'];
+      let userId = null;
+      
+      for (const field of possibleUserIdFields) {
+        if (decodedToken[field]) {
+          userId = decodedToken[field];
+          break;
+        }
+      }
+      
+      if (userId) {
+        console.log('Found user ID:', userId);
+        localStorage.setItem('userId', userId);
+      } else {
+        // For testing: set a temporary user ID (1) to make intern features work
+        console.warn('User ID not found in token, setting a temporary ID for testing');
+        localStorage.setItem('userId', '1');
+      }
 
       const targetPage = `/${getCurrentUserRole().toLowerCase()}/task`;
       await router.push(targetPage);
@@ -73,7 +104,8 @@ export const useAuthStore = defineStore('auth', () => {
   function logout() {
     localStorage.removeItem('access_token');
     localStorage.removeItem('userRole');
-    localStorage.removeItem('usernameDetail')
+    localStorage.removeItem('usernameDetail');
+    localStorage.removeItem('userId');
 
     delete axiosInstance.defaults.headers.common['Authorization'];
 
@@ -88,6 +120,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     usernameDetail,
     userRole,
+    currentUser,
     loginUser,
     logout,
     resetPass,

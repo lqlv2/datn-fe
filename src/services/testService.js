@@ -39,11 +39,23 @@ export const deleteTest = async (classId, testId) => {
 };
 
 export const submitTest = async (testId, internId, answers) => {
-  const response = await axiosInstance.post(
-    `${API_PREFIX}/tests/${testId}/submit?internId=${internId}`, 
-    answers
-  );
-  return response.data;
+  console.log(`Service: Submitting test ${testId} for intern ${internId} with ${Object.keys(answers).length} answers`);
+  try {
+    const response = await axiosInstance.post(
+      `${API_PREFIX}/tests/${testId}/submit?internId=${internId}`, 
+      answers
+    );
+    console.log('Service: Test submission successful:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Service: Test submission failed:', error);
+    if (error.response && error.response.status === 404) {
+      console.error('Service: Test or intern not found');
+    } else if (error.response && error.response.status === 400) {
+      console.error('Service: Invalid test submission data');
+    }
+    throw error;
+  }
 };
 
 export const fetchTestResults = async (testId) => {
@@ -52,6 +64,17 @@ export const fetchTestResults = async (testId) => {
 };
 
 export const fetchTestResultByIntern = async (testId, internId) => {
-  const response = await axiosInstance.get(`${API_PREFIX}/tests/${testId}/results/${internId}`);
-  return response.data;
+  console.log(`Service: Fetching test result for test ${testId} and intern ${internId}`);
+  try {
+    const response = await axiosInstance.get(`${API_PREFIX}/tests/${testId}/results/${internId}`);
+    console.log('Service: Test result fetched successfully:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Service: Error fetching test result:', error);
+    // Don't log as error for 404 - it's expected when test not taken yet
+    if (error.response && error.response.status === 404) {
+      console.log('Service: No test result found (expected for new tests)');
+    }
+    throw error;
+  }
 }; 

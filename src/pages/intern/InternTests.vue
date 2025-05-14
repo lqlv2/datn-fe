@@ -48,19 +48,30 @@
                 <template #title>
                   <div class="test-title">
                     {{ test.title }}
-                    <a-tag color="blue">{{ formatDuration(test.durationMinutes) }}</a-tag>
+                    <a-tag color="blue">{{ test.durationMinutes }} min</a-tag>
                   </div>
                 </template>
                 
                 <div class="test-info">
                   <p><strong>Class:</strong> {{ getClassNameById(test.classId) }}</p>
                   <p><strong>Passing Score:</strong> {{ test.passingScore }}%</p>
-                  <p v-if="test.description"><strong>Description:</strong> {{ test.description }}</p>
+                  <p v-if="test.scheduledStartTime && test.scheduledEndTime">
+                    <strong>Available Period:</strong><br/>
+                    {{ formatDate(test.scheduledStartTime) }} - {{ formatDate(test.scheduledEndTime) }}
+                  </p>
+                  <p v-else>
+                    <strong>Available:</strong> Any time
+                  </p>
                 </div>
                 
                 <div class="test-actions">
-                  <a-button type="primary" block @click="goToTest(test.id)">
-                    Take Test
+                  <a-button 
+                    type="primary" 
+                    block 
+                    @click="goToTest(test.id)"
+                    :disabled="!isTestAvailable(test)"
+                  >
+                    {{ getTestActionText(test) }}
                   </a-button>
                 </div>
               </a-card>
@@ -260,45 +271,65 @@ const filteredCompletedTests = computed(() => {
 
 onMounted(async () => {
   if (currentUserId.value) {
-    await fetchData();
+    await fetchTestsData();
   }
 });
 
-const fetchData = async () => {
+const fetchTestsData = async () => {
   loading.value = true;
   try {
-    await Promise.all([
-      internClassStore.fetchInternClasses(currentUserId.value),
-      internClassStore.fetchInternTests(currentUserId.value),
-      internClassStore.fetchTestStatistics(currentUserId.value)
-    ]);
+    // Fetch tests for the intern
+    await internClassStore.fetchInternTests(currentUserId.value);
     
-    // Fetch test results for each test
-    const results = [];
-    for (const test of internTests.value) {
+    // Fetch test statistics
+    await internClassStore.fetchTestStatistics(currentUserId.value);
+    
+    // Fetch test results if any
+    const tests = internClassStore.internTests;
+    testResults.value = [];
+    
+    for (const test of tests) {
       try {
-        const response = await internClassStore.fetchTestResultByIntern(test.id, currentUserId.value);
-        if (response && response.data) {
-          results.push(response.data);
+        const resultResponse = await internClassStore.fetchTestResultByIntern(test.id, currentUserId.value);
+        if (resultResponse && resultResponse.data) {
+          testResults.value.push(resultResponse.data);
         }
       } catch (error) {
-        // If no result is found, continue to the next test
-        console.log(`No results for test ${test.id}`);
+        // If no result exists, we'll just continue
+        if (!error.response || error.response.status !== 404) {
+          console.error(`Error fetching result for test ${test.id}:`, error);
+        }
       }
     }
-    
-    testResults.value = results;
   } catch (error) {
-    console.error('Error fetching data:', error);
-    message.error('Failed to load your tests');
+    console.error('Error fetching test data:', error);
+    message.error('Failed to load tests');
   } finally {
     loading.value = false;
   }
 };
 
-const refreshData = () => {
-  fetchData();
-  message.success('Data refreshed');
+const applyFilters = () => {
+  // The filtering is already handled by computed properties
+  // This method exists to handle the search button press
+};
+
+const applyCompletedFilters = () => {
+  // The filtering is already handled by computed properties
+  // This method exists to handle the search button press
+};
+
+const refreshData = async () => {
+  try {
+    await Promise.all([
+      fetchTestsData(),
+      internClassStore.fetchInternClasses(currentUserId.value)
+    ]);
+    message.success('Test data refreshed successfully');
+  } catch (error) {
+    console.error('Error refreshing data:', error);
+    message.error('Failed to refresh data');
+  }
 };
 
 const goToTest = (testId) => {
@@ -313,9 +344,10 @@ const formatDuration = (minutes) => {
   return `${minutes} min`;
 };
 
-const formatDate = (dateString) => {
-  if (!dateString) return 'N/A';
-  return new Date(dateString).toLocaleString();
+const formatDate = (dateStr) => {
+  if (!dateStr) return 'N/A';
+  const date = new Date(dateStr);
+  return date.toLocaleString();
 };
 
 const getClassNameById = (classId) => {
@@ -324,12 +356,34 @@ const getClassNameById = (classId) => {
   return classObj ? classObj.name : 'Unknown';
 };
 
-const applyFilters = () => {
-  // Implement filter application logic
+const isTestAvailable = (test) => {
+  if (!test.scheduledStartTime || !test.scheduledEndTime) {
+    return true; // Test is available anytime
+  }
+  
+  const now = new Date();
+  const start = new Date(test.scheduledStartTime);
+  const end = new Date(test.scheduledEndTime);
+  
+  return now >= start && now <= end;
 };
 
-const applyCompletedFilters = () => {
-  // Implement filter application logic
+const getTestActionText = (test) => {
+  if (!test.scheduledStartTime || !test.scheduledEndTime) {
+    return 'Take Test';
+  }
+  
+  const now = new Date();
+  const start = new Date(test.scheduledStartTime);
+  const end = new Date(test.scheduledEndTime);
+  
+  if (now < start) {
+    return 'Not Yet Available';
+  } else if (now > end) {
+    return 'No Longer Available';
+  } else {
+    return 'Take Test';
+  }
 };
 </script>
 

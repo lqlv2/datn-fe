@@ -362,21 +362,37 @@
             <a-input v-model:value="testForm.title" placeholder="Enter test title" />
           </a-form-item>
           
-          <a-form-item label="Test Duration (minutes)" name="durationMinutes">
-            <a-input-number v-model:value="testForm.durationMinutes" :min="1" style="width: 100%" />
-          </a-form-item>
-          
           <a-form-item label="Passing Score" name="passingScore">
             <a-input-number v-model:value="testForm.passingScore" :min="1" :max="100" style="width: 100%" />
           </a-form-item>
           
-          <a-form-item label="Status" name="isPublished">
-            <a-switch 
-              v-model:checked="testForm.isPublished" 
-              :checked-children="'Published'" 
-              :un-checked-children="'Unpublished'"
-            />
-          </a-form-item>
+          <template v-if="testForm.hasFixedPeriod">
+            <a-row :gutter="16">
+              <a-col :span="12">
+                <a-form-item label="Start Date & Time" name="scheduledStartTime">
+                  <a-date-picker 
+                    v-model:value="testForm.scheduledStartTime"
+                    :show-time="{ format: 'HH:mm' }"
+                    format="YYYY-MM-DD HH:mm"
+                    placeholder="Select start time"
+                    style="width: 100%"
+                  />
+                </a-form-item>
+              </a-col>
+              <a-col :span="12">
+                <a-form-item label="End Date & Time" name="scheduledEndTime">
+                  <a-date-picker 
+                    v-model:value="testForm.scheduledEndTime"
+                    :show-time="{ format: 'HH:mm' }"
+                    format="YYYY-MM-DD HH:mm"
+                    placeholder="Select end time"
+                    style="width: 100%"
+                    :disabled-date="disableEndDateBeforeStart"
+                  />
+                </a-form-item>
+              </a-col>
+            </a-row>
+          </template>
           
           <a-form-item label="Description" name="description">
             <a-textarea v-model:value="testForm.description" placeholder="Enter test description" rows="4" />
@@ -470,7 +486,10 @@ const testForm = reactive({
   description: '',
   durationMinutes: 60,
   passingScore: 70,
-  isPublished: false
+  isPublished: true,
+  hasFixedPeriod: true,
+  scheduledStartTime: null,
+  scheduledEndTime: null
 });
 
 const documentForm = reactive({
@@ -530,13 +549,6 @@ const testColumns = [
     slots: { customRender: 'title' }
   },
   {
-    title: 'Duration (min)',
-    dataIndex: 'durationMinutes',
-    key: 'durationMinutes',
-    align: 'center',
-    render: (text) => `${text} min`,
-  },
-  {
     title: 'Passing Score',
     dataIndex: 'passingScore',
     key: 'passingScore',
@@ -548,6 +560,17 @@ const testColumns = [
     key: 'isPublished',
     align: 'center',
     slots: { customRender: 'status' }
+  },
+  {
+    title: 'Scheduled Time',
+    key: 'scheduledTime',
+    align: 'center',
+    customRender: ({ record }) => {
+      if (record.scheduledStartTime && record.scheduledEndTime) {
+        return `${dayjs(record.scheduledStartTime).format('YYYY-MM-DD HH:mm')} - ${dayjs(record.scheduledEndTime).format('HH:mm')}`;
+      }
+      return 'Any time';
+    }
   },
   {
     title: 'Created At',
@@ -870,6 +893,9 @@ const handleEditTest = (record) => {
   testForm.durationMinutes = record.durationMinutes;
   testForm.passingScore = record.passingScore;
   testForm.isPublished = record.isPublished;
+  testForm.hasFixedPeriod = record.hasFixedPeriod;
+  testForm.scheduledStartTime = record.scheduledStartTime;
+  testForm.scheduledEndTime = record.scheduledEndTime;
   
   testModalVisible.value = true;
 };
@@ -884,7 +910,10 @@ const handleSaveTest = () => {
         description: testForm.description,
         durationMinutes: testForm.durationMinutes,
         passingScore: testForm.passingScore,
-        isPublished: Boolean(testForm.isPublished)
+        isPublished: Boolean(testForm.isPublished),
+        hasFixedPeriod: Boolean(testForm.hasFixedPeriod),
+        scheduledStartTime: testForm.scheduledStartTime,
+        scheduledEndTime: testForm.scheduledEndTime
       };
       
       if (editTestMode.value && testForm.id) {
@@ -914,7 +943,10 @@ const resetTestForm = () => {
   testForm.description = '';
   testForm.durationMinutes = 60;
   testForm.passingScore = 70;
-  testForm.isPublished = false;
+  testForm.isPublished = true;
+  testForm.hasFixedPeriod = true;
+  testForm.scheduledStartTime = null;
+  testForm.scheduledEndTime = null;
 };
 
 const handleViewTest = (record) => {
@@ -1316,6 +1348,10 @@ const fetchClassDocuments = async (classId) => {
   } catch (error) {
     console.error('Error fetching class documents:', error);
   }
+};
+
+const disableEndDateBeforeStart = (current) => {
+  return current && testForm.scheduledStartTime && current < testForm.scheduledStartTime;
 };
 </script>
 
