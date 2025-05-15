@@ -160,8 +160,31 @@ export const useInternClassStore = defineStore('internClass', {
         this.loading = true;
         const response = await testService.fetchTestResultByIntern(testId, internId);
         console.log('Fetched test result:', response);
-        this.currentTestResult = response.data;
-        return response;
+        
+        // Process the response to ensure it has the correct structure
+        let testResult;
+        
+        if (response.data) {
+          // If the API returns a nested data structure
+          testResult = response.data;
+          // Ensure testId is set
+          if (!testResult.testId) {
+            testResult.testId = testId;
+          }
+        } else {
+          // If the API returns a flat structure
+          testResult = response;
+          // Ensure testId is set
+          if (!testResult.testId) {
+            testResult.testId = testId;
+          }
+        }
+        
+        // Store the updated result
+        this.currentTestResult = testResult;
+        
+        // Return the response with the expected structure
+        return { data: testResult };
       } catch (error) {
         // Don't show error message for 404 - it's expected when a user hasn't taken a test yet
         if (error.response && error.response.status === 404) {

@@ -58,9 +58,17 @@
                   <p v-if="test.scheduledStartTime && test.scheduledEndTime">
                     <strong>Available Period:</strong><br/>
                     {{ formatDate(test.scheduledStartTime) }} - {{ formatDate(test.scheduledEndTime) }}
+                    <br/>
+                    <a-tag 
+                      :color="getTestAvailabilityColor(test)"
+                      style="margin-top: 5px"
+                    >
+                      {{ getTestAvailabilityStatus(test) }}
+                    </a-tag>
                   </p>
                   <p v-else>
                     <strong>Available:</strong> Any time
+                    <a-tag color="green" style="margin-left: 5px">Available Now</a-tag>
                   </p>
                 </div>
                 
@@ -73,6 +81,9 @@
                   >
                     {{ getTestActionText(test) }}
                   </a-button>
+                  <div v-if="!isTestAvailable(test) && isTestScheduledForFuture(test)" class="time-remaining">
+                    {{ getTimeUntilTestStarts(test) }}
+                  </div>
                 </div>
               </a-card>
             </a-col>
@@ -222,18 +233,44 @@ const upcomingTests = computed(() => {
 
 // Filter completed tests (with results)
 const completedTests = computed(() => {
+  if (!testResults.value.length) {
+    console.log('No test results in testResults.value');
+    return [];
+  }
+  
   return testResults.value.map(result => {
+    console.log('Processing test result:', result);
+    
+    // Find the corresponding test information
     const test = internTests.value.find(t => t.id === result.testId);
+    
     if (test) {
+      console.log('Found matching test for result:', test.title);
       return {
         ...test,
+        id: test.id, // Ensure ID is preserved
+        title: test.title,
+        durationMinutes: test.durationMinutes,
+        passingScore: test.passingScore,
+        classId: result.classId || test.classId || (test.lesson && test.lesson.classId),
         score: result.score,
         passed: result.score >= test.passingScore,
-        submissionDate: result.submissionDate
+        submissionDate: result.submissionDate || result.createdAt
+      };
+    } else {
+      console.log('No matching test found for result with testId:', result.testId);
+      // If we can't find the test, return a default object with the data we have
+      return {
+        id: result.testId,
+        title: result.testName || 'Unknown Test',
+        passingScore: result.passingScore || 70,
+        classId: result.classId,
+        score: result.score,
+        passed: result.score >= (result.passingScore || 70),
+        submissionDate: result.submissionDate || result.createdAt
       };
     }
-    return null;
-  }).filter(Boolean);
+  }).filter(Boolean); // Remove any null/undefined entries
 });
 
 // Apply filters
@@ -278,35 +315,117 @@ onMounted(async () => {
 const fetchTestsData = async () => {
   loading.value = true;
   try {
+    console.log('Starting to fetch test data for user:', currentUserId.value);
+    
     // Fetch tests for the intern
     await internClassStore.fetchInternTests(currentUserId.value);
+    console.log('Intern tests fetched:', internClassStore.internTests);
     
     // Fetch test statistics
     await internClassStore.fetchTestStatistics(currentUserId.value);
+    console.log('Test statistics fetched:', internClassStore.testStatistics);
+    
+    // Get the classes if not already loaded
+    if (!internClasses.value.length) {
+      await internClassStore.fetchInternClasses(currentUserId.value);
+      console.log('Intern classes fetched:', internClassStore.internClasses);
+    }
     
     // Fetch test results if any
-    const tests = internClassStore.internTests;
+    const tests = internClassStore.internTests || [];
     testResults.value = [];
+    console.log('Fetching results for', tests.length, 'tests');
     
-    for (const test of tests) {
-      try {
-        const resultResponse = await internClassStore.fetchTestResultByIntern(test.id, currentUserId.value);
-        if (resultResponse && resultResponse.data) {
-          testResults.value.push(resultResponse.data);
-        }
-      } catch (error) {
-        // If no result exists, we'll just continue
-        if (!error.response || error.response.status !== 404) {
-          console.error(`Error fetching result for test ${test.id}:`, error);
-        }
-      }
+    // Create an array of promises for all result fetches
+    const resultPromises = tests.map(test => 
+      internClassStore.fetchTestResultByIntern(test.id, currentUserId.value)
+        .then(response => {
+          if (response && response.data) {
+            console.log('Test result found for test ID:', test.id, response.data);
+            // Add classId to the result for proper matching
+            const resultWithClassId = {
+              ...response.data,
+              classId: test.classId || (test.lesson && test.lesson.classId),
+              testId: test.id
+            };
+            testResults.value.push(resultWithClassId);
+          }
+          return response;
+        })
+        .catch(error => {
+          // If no result exists, we'll just continue
+          if (!error.response || error.response.status !== 404) {
+            console.error(`Error fetching result for test ${test.id}:`, error);
+          } else {
+            console.log(`No results found for test ${test.id} (expected for not-taken tests)`);
+          }
+        })
+    );
+    
+    // Wait for all result fetches to complete
+    await Promise.allSettled(resultPromises);
+    
+    console.log('Test results fetched. Found', testResults.value.length, 'completed tests');
+    
+    // If we have no completed tests but we're in development/testing mode, generate some mock results
+    if (testResults.value.length === 0 && import.meta.env.DEV) {
+      console.log('No completed tests found, generating mock data for development');
+      generateMockTestResults();
     }
+    
+    // Debug output for completed tests
+    if (testResults.value.length) {
+      console.log('First completed test result:', testResults.value[0]);
+    } else {
+      console.log('No completed tests found');
+    }
+    
+    console.log('Completed tests computed property:', completedTests.value);
   } catch (error) {
     console.error('Error fetching test data:', error);
     message.error('Failed to load tests');
   } finally {
     loading.value = false;
   }
+};
+
+// Development helper to generate mock test results
+const generateMockTestResults = () => {
+  if (!internTests.value.length) {
+    console.log('No tests available to generate mock results');
+    return;
+  }
+  
+  // Create a mock test result for the first few tests
+  const testsToMock = Math.min(internTests.value.length, 3);
+  for (let i = 0; i < testsToMock; i++) {
+    const test = internTests.value[i];
+    console.log(`Generating mock result for test: ${test.title}`);
+    
+    // Create random score between passing score and 100 or below passing score
+    const isPassed = Math.random() > 0.3; // 70% chance of passing
+    const passingScore = test.passingScore || 70;
+    const score = isPassed 
+      ? Math.floor(passingScore + (Math.random() * (100 - passingScore))) 
+      : Math.floor(Math.random() * (passingScore - 10));
+    
+    // Generate result with all required fields
+    const mockResult = {
+      id: `mock-${test.id}`,
+      testId: test.id,
+      internId: currentUserId.value,
+      score: score,
+      passingScore: passingScore,
+      passed: isPassed,
+      submissionDate: new Date(Date.now() - Math.random() * 10 * 24 * 60 * 60 * 1000).toISOString(), // Random date in last 10 days
+      classId: test.classId || (test.lesson && test.lesson.classId),
+      answers: {}
+    };
+    
+    testResults.value.push(mockResult);
+  }
+  
+  console.log(`Generated ${testsToMock} mock test results for development`);
 };
 
 const applyFilters = () => {
@@ -368,6 +487,73 @@ const isTestAvailable = (test) => {
   return now >= start && now <= end;
 };
 
+const isTestScheduledForFuture = (test) => {
+  if (!test.scheduledStartTime) return false;
+  
+  const now = new Date();
+  const start = new Date(test.scheduledStartTime);
+  
+  return start > now;
+};
+
+const getTimeUntilTestStarts = (test) => {
+  if (!test.scheduledStartTime) return '';
+  
+  const now = new Date();
+  const start = new Date(test.scheduledStartTime);
+  
+  if (now >= start) return '';
+  
+  const diffMs = start - now;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffHrs = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+  
+  if (diffDays > 0) {
+    return `Available in ${diffDays} day${diffDays > 1 ? 's' : ''} and ${diffHrs} hour${diffHrs > 1 ? 's' : ''}`;
+  } else if (diffHrs > 0) {
+    return `Available in ${diffHrs} hour${diffHrs > 1 ? 's' : ''} and ${diffMins} minute${diffMins > 1 ? 's' : ''}`;
+  } else {
+    return `Available in ${diffMins} minute${diffMins > 1 ? 's' : ''}`;
+  }
+};
+
+const getTestAvailabilityStatus = (test) => {
+  if (!test.scheduledStartTime || !test.scheduledEndTime) {
+    return 'Available Now';
+  }
+  
+  const now = new Date();
+  const start = new Date(test.scheduledStartTime);
+  const end = new Date(test.scheduledEndTime);
+  
+  if (now < start) {
+    return 'Coming Soon';
+  } else if (now > end) {
+    return 'No Longer Available';
+  } else {
+    return 'Available Now';
+  }
+};
+
+const getTestAvailabilityColor = (test) => {
+  if (!test.scheduledStartTime || !test.scheduledEndTime) {
+    return 'green';
+  }
+  
+  const now = new Date();
+  const start = new Date(test.scheduledStartTime);
+  const end = new Date(test.scheduledEndTime);
+  
+  if (now < start) {
+    return 'orange';
+  } else if (now > end) {
+    return 'red';
+  } else {
+    return 'green';
+  }
+};
+
 const getTestActionText = (test) => {
   if (!test.scheduledStartTime || !test.scheduledEndTime) {
     return 'Take Test';
@@ -378,9 +564,9 @@ const getTestActionText = (test) => {
   const end = new Date(test.scheduledEndTime);
   
   if (now < start) {
-    return 'Not Yet Available';
+    return 'View Test Details';
   } else if (now > end) {
-    return 'No Longer Available';
+    return 'Test Unavailable';
   } else {
     return 'Take Test';
   }
@@ -436,6 +622,16 @@ const getTestActionText = (test) => {
 
 .test-actions {
   margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.time-remaining {
+  font-size: 12px;
+  color: #fa8c16;
+  text-align: center;
+  padding-top: 4px;
 }
 
 /* Tab styling */

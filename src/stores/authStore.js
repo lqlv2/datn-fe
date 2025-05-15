@@ -56,7 +56,7 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem('username', decodedToken.sub);
       
       // Try to find user ID in the token (common fields where it might be located)
-      const possibleUserIdFields = ['userId', 'sub', 'id', 'user_id'];
+      const possibleUserIdFields = ['internId', 'userId', 'sub', 'id', 'user_id', 'uid'];
       let userId = null;
       
       for (const field of possibleUserIdFields) {
@@ -66,13 +66,20 @@ export const useAuthStore = defineStore('auth', () => {
         }
       }
       
+      // If we didn't find a specific userId field, try to parse it from other token fields
+      if (!userId && decodedToken.sub) {
+        // Sometimes the subject contains or is the user ID
+        const subParts = decodedToken.sub.split(':');
+        if (subParts.length > 1 && !isNaN(subParts[subParts.length - 1])) {
+          userId = subParts[subParts.length - 1];
+        } else if (!isNaN(decodedToken.sub)) {
+          userId = decodedToken.sub;
+        }
+      }
+      
       if (userId) {
         console.log('Found user ID:', userId);
         localStorage.setItem('userId', userId);
-      } else {
-        // For testing: set a temporary user ID (1) to make intern features work
-        console.warn('User ID not found in token, setting a temporary ID for testing');
-        localStorage.setItem('userId', '1');
       }
 
       const targetPage = `/${getCurrentUserRole().toLowerCase()}/task`;

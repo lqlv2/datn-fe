@@ -167,11 +167,12 @@ const completedClasses = computed(() =>
 
 const currentUserId = computed(() => {
   const user = authStore.currentUser;
-  return user ? user.id : null;
+  // Fallback to user ID from localStorage or a default value if not available in currentUser
+  return user?.id || parseInt(localStorage.getItem('userId'), 10) || null;
 });
 
 onMounted(async () => {
-  if (currentUserId.value) {
+  // Get user ID directly from localStorage if not available in authStore
     await fetchAllData();
     // Initialize calendar only if we're in calendar view
     if (!showStats.value) {
@@ -180,7 +181,6 @@ onMounted(async () => {
         initCalendar();
       }, 100);
     }
-  }
 });
 
 onBeforeUnmount(() => {
@@ -198,9 +198,15 @@ onBeforeUnmount(() => {
 const fetchAllData = async () => {
   loading.value = true;
   try {
-    console.log('Fetching all data for user ID:', currentUserId.value);
-    await fetchClasses();
-    await fetchTestsData();
+    // Get the user ID directly from localStorage as a fallback
+    const userId = currentUserId.value || parseInt(localStorage.getItem('userId'), 10);
+    if (!userId) {
+      throw new Error('User ID not available');
+    }
+    
+    console.log('Fetching all data for user ID:', userId);
+    await fetchClasses(userId);
+    await fetchTestsData(userId);
   } catch (error) {
     console.error('Error fetching data:', error);
     message.error('Failed to load all data');
@@ -209,10 +215,16 @@ const fetchAllData = async () => {
   }
 };
 
-const fetchClasses = async () => {
+const fetchClasses = async (userId) => {
   try {
-    console.log('Fetching classes for intern ID:', currentUserId.value);
-    const response = await internClassStore.fetchInternClasses(currentUserId.value);
+    // Use provided userId or fallback to computed value
+    const internId = userId || currentUserId.value;
+    if (!internId) {
+      throw new Error('Intern ID not available');
+    }
+    
+    console.log('Fetching classes for intern ID:', internId);
+    const response = await internClassStore.fetchInternClasses(internId);
     internClasses.value = response || [];
     console.log('Fetched classes:', internClasses.value);
   } catch (error) {
@@ -222,11 +234,17 @@ const fetchClasses = async () => {
 };
 
 // Add a dedicated function to fetch tests
-const fetchTestsData = async () => {
+const fetchTestsData = async (userId) => {
   testsLoading.value = true;
   try {
-    console.log('Fetching tests data for user ID:', currentUserId.value);
-    await internClassStore.fetchInternTests(currentUserId.value);
+    // Use provided userId or fallback to computed value
+    const internId = userId || currentUserId.value;
+    if (!internId) {
+      throw new Error('Intern ID not available');
+    }
+    
+    console.log('Fetching tests data for user ID:', internId);
+    await internClassStore.fetchInternTests(internId);
     console.log('Fetched tests:', internClassStore.internTests);
     if (internClassStore.internTests) {
       upcomingTests.value = internClassStore.internTests
@@ -289,9 +307,15 @@ const initCalendar = () => {
 
 const fetchCalendarEvents = async (startDate, endDate) => {
   try {
-    console.log(`Fetching calendar events from ${startDate} to ${endDate} for user ${currentUserId.value}`);
+    // Get the user ID directly from localStorage as a fallback
+    const userId = currentUserId.value || parseInt(localStorage.getItem('userId'), 10);
+    if (!userId) {
+      throw new Error('User ID not available');
+    }
+    
+    console.log(`Fetching calendar events from ${startDate} to ${endDate} for user ${userId}`);
     const response = await internClassStore.fetchScheduleEvents(
-      currentUserId.value, 
+      userId, 
       startDate,
       endDate
     );

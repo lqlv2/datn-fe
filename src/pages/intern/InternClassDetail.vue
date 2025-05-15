@@ -38,30 +38,66 @@
           <a-empty v-if="!classDocuments || classDocuments.length === 0" description="No documents available for this class" />
           
           <div v-else class="document-list">
-            <a-table
-              :dataSource="classDocuments"
-              :columns="documentColumns"
-              :pagination="{ pageSize: 10 }"
-              :row-key="record => record.id"
-            >
-              <template #bodyCell="{ column, record }">
-                <template v-if="column.key === 'fileName'">
-                  <a @click="downloadDocument(record)">{{ record.fileName }}</a>
-                </template>
-                <template v-if="column.key === 'fileSize'">
-                  {{ formatFileSize(record.fileSize) }}
-                </template>
-                <template v-if="column.key === 'type'">
-                  <a-tag color="blue">{{ record.type }}</a-tag>
-                </template>
-                <template v-if="column.key === 'action'">
-                  <a-button type="primary" size="small" @click="downloadDocument(record)">
-                    <download-outlined />
-                    Download
-                  </a-button>
-                </template>
-              </template>
-            </a-table>
+            <a-tabs>
+              <a-tab-pane key="db-documents" tab="Class Documents">
+                <a-table
+                  :dataSource="classDocuments"
+                  :columns="documentColumns"
+                  :pagination="{ pageSize: 10 }"
+                  :row-key="record => record.id"
+                >
+                  <template #bodyCell="{ column, record }">
+                    <template v-if="column.key === 'fileName'">
+                      <a @click="downloadDocument(record)">{{ record.fileName }}</a>
+                    </template>
+                    <template v-if="column.key === 'fileSize'">
+                      {{ formatFileSize(record.fileSize) }}
+                    </template>
+                    <template v-if="column.key === 'type'">
+                      <a-tag color="blue">{{ record.type }}</a-tag>
+                    </template>
+                    <template v-if="column.key === 'action'">
+                      <a-button type="primary" size="small" @click="downloadDocument(record)">
+                        <download-outlined />
+                        Download
+                      </a-button>
+                    </template>
+                  </template>
+                </a-table>
+              </a-tab-pane>
+              
+              <a-tab-pane key="s3-documents" tab="Additional Resources">
+                <a-input-search
+                  placeholder="Filter by prefix"
+                  style="width: 300px; margin-bottom: 16px"
+                  v-model:value="s3Prefix"
+                  @search="fetchS3Documents"
+                  enter-button
+                />
+                
+                <a-table
+                  :dataSource="s3Documents"
+                  :columns="s3DocumentColumns"
+                  :pagination="{ pageSize: 10 }"
+                  :row-key="record => record.s3Key"
+                >
+                  <template #bodyCell="{ column, record }">
+                    <template v-if="column.key === 'fileName'">
+                      <a @click="downloadS3Document(record)">{{ record.fileName }}</a>
+                    </template>
+                    <template v-if="column.key === 'fileSize'">
+                      {{ formatFileSize(record.fileSize) }}
+                    </template>
+                    <template v-if="column.key === 'action'">
+                      <a-button type="primary" size="small" @click="downloadS3Document(record)">
+                        <download-outlined />
+                        Download
+                      </a-button>
+                    </template>
+                  </template>
+                </a-table>
+              </a-tab-pane>
+            </a-tabs>
           </div>
         </a-tab-pane>
         
@@ -139,6 +175,8 @@ import {
   DownloadOutlined,
   FormOutlined
 } from '@ant-design/icons-vue';
+import dayjs from 'dayjs';
+import {fetchClassDocuments} from "@/services/classService.js";
 
 const route = useRoute();
 const router = useRouter();
@@ -150,6 +188,8 @@ const classDetail = ref(null);
 const classDocuments = ref([]);
 const classTests = ref([]);
 const loading = ref(false);
+const s3Documents = ref([]);
+const s3Prefix = ref('');
 
 // Table columns
 const documentColumns = [
@@ -223,9 +263,53 @@ const testColumns = [
   },
 ];
 
+const s3DocumentColumns = [
+  {
+    title: 'File Name',
+    dataIndex: 'fileName',
+    key: 'fileName',
+    align: 'center',
+    slots: { customRender: 'fileName' }
+  },
+  {
+    title: 'File Size',
+    dataIndex: 'fileSize',
+    key: 'fileSize',
+    align: 'center',
+    slots: { customRender: 'fileSize' }
+  },
+  {
+    title: 'Last Modified',
+    dataIndex: 'createdAt',
+    key: 'createdAt',
+    align: 'center',
+    render: (text) => text ? dayjs(text).format('YYYY-MM-DD HH:mm') : '',
+  },
+  {
+    title: 'Action',
+    key: 'action',
+    align: 'center',
+    slots: { customRender: 'action' }
+  }
+];
+
 onMounted(async () => {
-  if (classId.value) {
-    await fetchData();
+  loading.value = true;
+  
+  try {
+    // Fetch all the necessary data
+    await Promise.all([
+      fetchClassDetails(),
+      fetchInterns(),
+      fetchClassDocuments(),
+      fetchS3Documents(),
+      fetchMentor()
+    ]);
+  } catch (error) {
+    console.error('Error loading class data:', error);
+    message.error('Failed to load class data');
+  } finally {
+    loading.value = false;
   }
 });
 
@@ -351,6 +435,56 @@ const isTestAvailable = (test) => {
   const end = new Date(test.scheduledEndTime);
   
   return now >= start && now <= end;
+};
+
+const fetchS3Documents = async () => {
+  try {
+    const response = await classStore.fetchS3ClassDocuments(classId.value, s3Prefix.value);
+    if (response && response.data) {
+      s3Documents.value = response.data;
+    }
+  } catch (error) {
+    console.error('Error fetching S3 documents:', error);
+  }
+};
+
+const downloadS3Document = async (document) => {
+  try {
+    loading.value = true;
+    
+    // Check if it has a download URL or if we need to get one
+    let downloadUrl = document.downloadUrl;
+    
+    if (!downloadUrl && document.id && document.id > 0) {
+      // This is a database document with an S3 key, get a presigned URL
+      const response = await classStore.getDocumentPresignedUrl(classId.value, document.id);
+      downloadUrl = response;
+    } else if (!downloadUrl) {
+      // This is a direct S3 object without a database entry
+      message.error('Direct download not available for this file');
+      loading.value = false;
+      return;
+    }
+    
+    // Download using the URL
+    const response = await classStore.directDownloadDocument(downloadUrl);
+    
+    // Create a URL for the blob and trigger a download
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', document.fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    message.success('Document download started');
+  } catch (error) {
+    console.error('Error downloading S3 document:', error);
+    message.error('Failed to download document');
+  } finally {
+    loading.value = false;
+  }
 };
 </script>
 

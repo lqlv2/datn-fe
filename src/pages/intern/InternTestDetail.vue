@@ -17,6 +17,9 @@
           <a-button v-else-if="testResult" type="primary" @click="switchToResultView">
             View Result
           </a-button>
+          <a-tag v-if="hasScheduledPeriod && isTestAvailable && !isTestStarted && !isViewingResults" color="green">
+            Available Now
+          </a-tag>
         </a-space>
       </template>
     </a-page-header>
@@ -36,11 +39,12 @@
             </a-descriptions-item>
           </a-descriptions>
           
-          <div v-if="hasScheduledPeriod && !isTestAvailable" class="scheduled-alert">
+          <div v-if="hasScheduledPeriod" class="scheduled-alert">
             <a-alert 
-              :type="isTestStarted ? 'error' : 'warning'" 
+              :type="isTestAvailable ? 'success' : (timeUntilTestStarts ? 'warning' : 'error')" 
               :message="scheduledTimeMessage" 
               banner 
+              show-icon
             />
           </div>
           
@@ -68,9 +72,25 @@
               size="large" 
               @click="startTest" 
               :disabled="testQuestions.length === 0 || (hasScheduledPeriod && !isTestAvailable)"
+              :style="isTestAvailable ? { backgroundColor: '#52c41a', borderColor: '#52c41a' } : {}"
             >
-              Start Test
+              <template #icon><play-circle-outlined v-if="isTestAvailable" /></template>
+              {{ isTestAvailable ? 'Start Test Now' : 'Start Test' }}
             </a-button>
+            
+            <div v-if="hasScheduledPeriod && timeUntilTestStarts && !isTestAvailable" class="test-countdown">
+              <p>Test will be available in:</p>
+              <div class="countdown-timer">
+                <div class="time-unit">
+                  <span class="time-value">{{ timeUntilTestStarts.hours }}</span>
+                  <span class="time-label">hours</span>
+                </div>
+                <div class="time-unit">
+                  <span class="time-value">{{ timeUntilTestStarts.minutes }}</span>
+                  <span class="time-label">minutes</span>
+                </div>
+              </div>
+            </div>
           </div>
         </a-card>
         
@@ -285,6 +305,7 @@ import { useInternClassStore } from '@/stores/internClassStore';
 import { useTestQuestionStore } from '@/stores/testQuestionStore';
 import { useAuthStore } from '@/stores/authStore';
 import { message, Modal } from 'ant-design-vue';
+import { PlayCircleOutlined } from '@ant-design/icons-vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -328,16 +349,54 @@ const hasScheduledPeriod = computed(() => {
 });
 
 const isTestAvailable = computed(() => {
+  if (!hasScheduledPeriod.value) {
+    return true; // If no scheduled time, test is always available
+  }
+  
   const now = new Date();
   const scheduledStartTime = new Date(test.value.scheduledStartTime);
   const scheduledEndTime = new Date(test.value.scheduledEndTime);
+  
   return now >= scheduledStartTime && now <= scheduledEndTime;
+});
+
+const timeUntilTestStarts = computed(() => {
+  if (!hasScheduledPeriod.value) return null;
+  
+  const now = new Date();
+  const startTime = new Date(test.value.scheduledStartTime);
+  
+  if (now >= startTime) return null;
+  
+  const diffMs = startTime - now;
+  const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+  
+  return {
+    hours: diffHrs,
+    minutes: diffMins,
+    total: diffMs
+  };
 });
 
 const scheduledTimeMessage = computed(() => {
   if (!hasScheduledPeriod.value) return '';
-  if (!isTestAvailable.value) return 'This test is not available for taking.';
-  return 'This test is available for taking.';
+  
+  const now = new Date();
+  const startTime = new Date(test.value.scheduledStartTime);
+  const endTime = new Date(test.value.scheduledEndTime);
+  
+  if (now < startTime) {
+    // Test hasn't started yet
+    const time = timeUntilTestStarts.value;
+    return `This test will be available in ${time.hours} hours and ${time.minutes} minutes (${formatDateTime(startTime)})`;
+  } else if (now > endTime) {
+    // Test period has ended
+    return `This test is no longer available. The test period ended on ${formatDateTime(endTime)}`;
+  } else {
+    // Currently in test period
+    return `This test is available now until ${formatDateTime(endTime)}`;
+  }
 });
 
 onMounted(async () => {
@@ -362,7 +421,21 @@ const fetchData = async () => {
     
     // Fetch test questions
     const questionsResponse = await testQuestionStore.fetchTestQuestionsByTestId(testId.value);
-    testQuestions.value = questionsResponse.data || [];
+    
+    // Handle both possible response structures
+    if (Array.isArray(questionsResponse)) {
+      testQuestions.value = questionsResponse;
+    } else if (questionsResponse && questionsResponse.data && Array.isArray(questionsResponse.data)) {
+      testQuestions.value = questionsResponse.data;
+    } else if (questionsResponse && Array.isArray(questionsResponse.questions)) {
+      testQuestions.value = questionsResponse.questions;
+    } else if (test.value && Array.isArray(test.value.questions)) {
+      testQuestions.value = test.value.questions;
+    } else {
+      console.warn('Questions data not in expected format:', questionsResponse);
+      testQuestions.value = [];
+    }
+    
     console.log('Test questions loaded:', testQuestions.value.length);
     
     // Try to fetch test result (may not exist if test not taken yet)
@@ -582,7 +655,9 @@ const formatDateTime = (dateString) => {
 .test-actions {
   margin-top: 24px;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
 
 .test-header {
@@ -700,5 +775,59 @@ const formatDateTime = (dateString) => {
 
 .scheduled-alert {
   margin-top: 20px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.scheduled-alert :deep(.ant-alert) {
+  border-radius: 4px;
+  padding: 12px 16px;
+}
+
+.scheduled-alert :deep(.ant-alert-message) {
+  font-size: 15px;
+}
+
+.test-countdown {
+  margin-top: 12px;
+  text-align: center;
+}
+
+.test-countdown p {
+  font-size: 14px;
+  color: #999;
+  margin-bottom: 8px;
+}
+
+.countdown-timer {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.time-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.time-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #fa8c16;
+  background-color: #fff8e6;
+  border-radius: 4px;
+  min-width: 48px;
+  display: inline-block;
+  text-align: center;
+  padding: 4px 8px;
+  border: 1px solid #ffe7ba;
+}
+
+.time-label {
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
 }
 </style> 

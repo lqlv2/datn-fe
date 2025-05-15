@@ -68,7 +68,19 @@ export const fetchTestResultByIntern = async (testId, internId) => {
   try {
     const response = await axiosInstance.get(`${API_PREFIX}/tests/${testId}/results/${internId}`);
     console.log('Service: Test result fetched successfully:', response.data);
-    return response.data;
+    
+    // Ensure the response data includes the testId for easier referencing
+    let responseData = response.data;
+    if (responseData && responseData.data && !responseData.data.testId) {
+      responseData.data.testId = testId;
+    }
+    
+    // If the response structure doesn't have a data property, add the testId directly
+    if (responseData && !responseData.data && !responseData.testId) {
+      responseData.testId = testId;
+    }
+    
+    return responseData;
   } catch (error) {
     console.error('Service: Error fetching test result:', error);
     // Don't log as error for 404 - it's expected when test not taken yet

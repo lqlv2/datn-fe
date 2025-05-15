@@ -71,15 +71,6 @@
                 <p><strong>Mentor:</strong> {{ classItem.mentor ? classItem.mentor.fullname : 'Not assigned yet' }}</p>
                 <p v-if="classItem.description"><strong>Description:</strong> {{ classItem.description }}</p>
               </div>
-              
-              <a-button 
-                type="danger" 
-                class="unregister-btn" 
-                @click="confirmUnregister(classItem)"
-                :disabled="classItem.status === 'COMPLETED'"
-              >
-                Unregister
-              </a-button>
             </a-card>
           </div>
         </a-spin>

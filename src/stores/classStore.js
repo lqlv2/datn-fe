@@ -290,36 +290,34 @@ export const useClassStore = defineStore('class', {
       try {
         this.loading = true;
         const response = await classService.fetchClassDocuments(classId);
-        this.classDocuments = response.data || [];
         return response;
       } catch (error) {
         this.error = error.message;
-        message.error('Failed to fetch class documents');
+        message.error('Failed to fetch documents');
         throw error;
       } finally {
         this.loading = false;
       }
     },
     
-    async deleteClassDocument(classId, documentId) {
+    async getDocumentPresignedUrl(classId, documentKey) {
       try {
         this.loading = true;
-        const response = await classService.deleteClassDocument(classId, documentId);
-        message.success('Document deleted successfully');
-        return response;
+        const response = await classService.getDocumentPresignedUrl(classId, documentKey);
+        return response.data;
       } catch (error) {
         this.error = error.message;
-        message.error('Failed to delete document');
+        message.error('Failed to get document URL');
         throw error;
       } finally {
         this.loading = false;
       }
     },
     
-    async downloadClassDocument(classId, documentId) {
+    async downloadClassDocument(classId, documentKey) {
       try {
         this.loading = true;
-        const response = await classService.downloadClassDocument(classId, documentId);
+        const response = await classService.downloadClassDocument(documentKey);
         return response;
       } catch (error) {
         this.error = error.message;
@@ -329,5 +327,34 @@ export const useClassStore = defineStore('class', {
         this.loading = false;
       }
     },
+    
+    async directDownloadDocument(url) {
+      try {
+        this.loading = true;
+        const response = await classService.directDownloadDocument(url);
+        return response;
+      } catch (error) {
+        this.error = error.message;
+        message.error('Failed to download document');
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+    
+    async deleteClassDocument(classId, documentKey) {
+      try {
+        this.loading = true;
+        const response = await classService.deleteClassDocument(classId, documentKey);
+        message.success('Document deleted successfully');
+        return response;
+      } catch (error) {
+        this.error = error.message;
+        message.error('Failed to delete document');
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    }
   },
 });

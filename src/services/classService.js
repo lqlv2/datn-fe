@@ -79,35 +79,63 @@ const formatClassData = (classData) => {
   return formattedData;
 };
 
-// Document related endpoints
+// Document related endpoints - unified S3 approach
 export const uploadClassDocument = async (classId, documentData) => {
+  console.log('uploadClassDocument called with classId:', classId);
+  console.log('documentData:', documentData);
+  
   const formData = new FormData();
   formData.append('file', documentData.file);
   formData.append('title', documentData.title);
-  formData.append('description', documentData.description);
+  formData.append('description', documentData.description || '');
   formData.append('type', documentData.type);
   
-  const response = await axiosInstance.post(`${API_PREFIX}/classes/${classId}/documents`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
-  return response.data;
+  try {
+    // Use unified S3 document endpoint
+    const response = await axiosInstance.post(`${API_PREFIX}/classes/${classId}/documents`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    console.log('Upload response:', response);
+    return response.data;
+  } catch (error) {
+    console.error('Error in uploadClassDocument:', error);
+    console.error('Error response:', error.response);
+    throw error;
+  }
 };
 
 export const fetchClassDocuments = async (classId) => {
+  // Use unified S3 document endpoint
   const response = await axiosInstance.get(`${API_PREFIX}/classes/${classId}/documents`);
   return response.data;
 };
 
-export const deleteClassDocument = async (classId, documentId) => {
-  const response = await axiosInstance.delete(`${API_PREFIX}/classes/${classId}/documents/${documentId}`);
+export const deleteClassDocument = async (classId, documentKey) => {
+  // Use unified S3 document endpoint with the S3 key
+  const response = await axiosInstance.delete(`${API_PREFIX}/classes/${classId}/documents`, {
+    data: { key: documentKey }
+  });
   return response.data;
 };
 
-export const downloadClassDocument = async (classId, documentId) => {
-  const response = await axiosInstance.get(`${API_PREFIX}/classes/${classId}/documents/${documentId}/download`, {
+export const downloadClassDocument = async (documentKey) => {
+  // Get a presigned URL for download
+  const downloadUrl = `/api/classes/documents/${documentKey}/download")`;
+  return directDownloadDocument(downloadUrl);
+};
+
+export const getDocumentPresignedUrl = async (classId, documentKey) => {
+  // Use unified S3 document endpoint with the document key
+  const response = await axiosInstance.get(`${API_PREFIX}/classes/${classId}/documents/url`, {
+    params: { key: documentKey }
+  });
+  return response.data;
+};
+
+export const directDownloadDocument = async (url) => {
+  return await axiosInstance.get(url, {
     responseType: 'blob',
   });
-  return response;
 };
 
 export const fetchClassStatistics = async (classId) => {
