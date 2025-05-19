@@ -7,14 +7,11 @@
     >
       <template #extra>
         <a-space>
-          <a-tag :color="test && test.isPublished ? 'green' : 'orange'">
-            {{ test && test.isPublished ? 'Published' : 'Unpublished' }}
-          </a-tag>
-          <a-button type="primary" @click="showCreateQuestionModal">
+          <a-button type="primary" @click="showCreateQuestionModal" :disabled="!canEditTest">
             <PlusOutlined />
             Add Question
           </a-button>
-          <a-button type="primary" @click="showBatchAddModal">
+          <a-button type="primary" @click="showBatchAddModal" :disabled="!canEditTest">
             <BulbOutlined />
             Batch Add Questions
           </a-button>
@@ -26,9 +23,8 @@
       <a-descriptions title="Test Information" bordered>
         <a-descriptions-item label="Title">{{ test?.title }}</a-descriptions-item>
         <a-descriptions-item label="Description">{{ test?.description || 'No description' }}</a-descriptions-item>
-        <a-descriptions-item label="Duration">{{ test?.durationMinutes }} minutes</a-descriptions-item>
+        <a-descriptions-item label="Duration">{{ dayjs(test?.scheduledEndTime).diff(dayjs(test?.scheduledStartTime), 'minutes') }} minutes</a-descriptions-item>
         <a-descriptions-item label="Passing Score">{{ test?.passingScore }}</a-descriptions-item>
-        <a-descriptions-item label="Published">{{ test?.isPublished ? 'Yes' : 'No' }}</a-descriptions-item>
         <a-descriptions-item label="Scheduled Period">
           <template v-if="test?.scheduledStartTime && test?.scheduledEndTime">
             {{ dayjs(test.scheduledStartTime).format('YYYY-MM-DD HH:mm') }} - 
@@ -40,54 +36,95 @@
       </a-descriptions>
     </a-card>
 
-    <a-card title="Test Questions" class="question-list-card">
-      <a-spin :spinning="loading">
-        <a-empty v-if="testQuestions.length === 0" description="No questions added to this test yet" />
-        
-        <div v-else class="questions-container">
-          <a-collapse v-model:activeKey="activeQuestionKeys">
-            <a-collapse-panel 
-              v-for="(question, index) in testQuestions" 
-              :key="question.id"
-              :header="`Question ${index + 1}: ${question.question}`"
-            >
-              <div class="question-content">
-                <div class="question-text">{{ question.question }}</div>
-                
-                <div class="options-container">
-                  <div class="option" :class="{ 'correct-option': question.correctOption === 'A' }">
-                    <span class="option-label">A:</span> {{ question.optionA }}
+    <a-tabs v-model:activeKey="activeTab" class="test-tabs">
+      <a-tab-pane key="questions" tab="Questions">
+        <a-card title="Test Questions" class="question-list-card">
+          <a-spin :spinning="loading">
+            <a-empty v-if="testQuestions.length === 0" description="No questions added to this test yet" />
+            
+            <div v-else class="questions-container">
+              <a-collapse v-model:activeKey="activeQuestionKeys">
+                <a-collapse-panel 
+                  v-for="(question, index) in testQuestions" 
+                  :key="question.id"
+                  :header="`Question ${index + 1}: ${question.question}`"
+                >
+                  <div class="question-content">
+                    <div class="question-text">{{ question.question }}</div>
+                    
+                    <div class="options-container">
+                      <div class="option" :class="{ 'correct-option': question.correctOption === 'A' }">
+                        <span class="option-label">A:</span> {{ question.optionA }}
+                      </div>
+                      <div class="option" :class="{ 'correct-option': question.correctOption === 'B' }">
+                        <span class="option-label">B:</span> {{ question.optionB }}
+                      </div>
+                      <div class="option" :class="{ 'correct-option': question.correctOption === 'C' }">
+                        <span class="option-label">C:</span> {{ question.optionC }}
+                      </div>
+                      <div class="option" :class="{ 'correct-option': question.correctOption === 'D' }">
+                        <span class="option-label">D:</span> {{ question.optionD }}
+                      </div>
+                    </div>
+                    
+                    <div class="question-footer">
+                      <span>Points: {{ question.points }}</span>
+                      <div class="question-actions">
+                        <a-button type="primary" size="small" @click.stop="editQuestion(question)">
+                          <EditOutlined />
+                          Edit
+                        </a-button>
+                        <a-button type="danger" size="small" @click.stop="confirmDeleteQuestion(question)">
+                          <DeleteOutlined />
+                          Delete
+                        </a-button>
+                      </div>
+                    </div>
                   </div>
-                  <div class="option" :class="{ 'correct-option': question.correctOption === 'B' }">
-                    <span class="option-label">B:</span> {{ question.optionB }}
-                  </div>
-                  <div class="option" :class="{ 'correct-option': question.correctOption === 'C' }">
-                    <span class="option-label">C:</span> {{ question.optionC }}
-                  </div>
-                  <div class="option" :class="{ 'correct-option': question.correctOption === 'D' }">
-                    <span class="option-label">D:</span> {{ question.optionD }}
-                  </div>
-                </div>
-                
-                <div class="question-footer">
-                  <span>Points: {{ question.points }}</span>
-                  <div class="question-actions">
-                    <a-button type="primary" size="small" @click.stop="editQuestion(question)">
-                      <EditOutlined />
-                      Edit
-                    </a-button>
-                    <a-button type="danger" size="small" @click.stop="confirmDeleteQuestion(question)">
-                      <DeleteOutlined />
-                      Delete
-                    </a-button>
-                  </div>
-                </div>
-              </div>
-            </a-collapse-panel>
-          </a-collapse>
-        </div>
-      </a-spin>
-    </a-card>
+                </a-collapse-panel>
+              </a-collapse>
+            </div>
+          </a-spin>
+        </a-card>
+      </a-tab-pane>
+
+      <a-tab-pane key="results" tab="Test Results">
+        <a-card title="Test Results" class="results-card">
+          <a-spin :spinning="loading">
+            <a-empty v-if="testResults.length === 0" description="No results available for this test yet" />
+            
+            <div v-else class="results-container">
+              <a-table
+                :dataSource="testResults"
+                :columns="resultColumns"
+                :pagination="{ pageSize: 10 }"
+                :row-key="record => record.id"
+              >
+                <template #score="{ text }">
+                  <a-tag :color="text >= test?.passingScore ? 'success' : 'error'">
+                    {{ text }}%
+                  </a-tag>
+                </template>
+                <template #status="{ record }">
+                  <a-tag :color="record.isPassed ? 'success' : 'error'">
+                    {{ record.isPassed ? 'PASSED' : 'FAILED' }}
+                  </a-tag>
+                </template>
+                <template #submittedAt="{ text }">
+                  {{ dayjs(text).format('YYYY-MM-DD HH:mm:ss') }}
+                </template>
+                <template #action="{ record }">
+                  <a-button type="primary" size="small" @click="showDetailedResult(record)">
+                    <EyeOutlined />
+                    View Details
+                  </a-button>
+                </template>
+              </a-table>
+            </div>
+          </a-spin>
+        </a-card>
+      </a-tab-pane>
+    </a-tabs>
 
     <!-- Create/Edit Question Modal -->
     <a-modal
@@ -278,18 +315,188 @@
         </a-button>
       </div>
     </a-modal>
+
+    <!-- Detailed Test Result Modal -->
+    <a-modal
+      v-model:visible="detailedResultModalVisible"
+      title="Detailed Test Result"
+      width="800px"
+      :footer="null"
+    >
+      <a-spin :spinning="loading">
+        <div v-if="selectedResult" class="detailed-result">
+          <a-descriptions title="Test Information" bordered>
+            <a-descriptions-item label="Intern Name">{{ selectedResult.intern?.fullname }}</a-descriptions-item>
+            <a-descriptions-item label="Score">
+              <a-tag :color="selectedResult.score >= test?.passingScore ? 'success' : 'error'">
+                {{ selectedResult.score }}%
+              </a-tag>
+            </a-descriptions-item>
+            <a-descriptions-item label="Status">
+              <a-tag :color="selectedResult.isPassed ? 'success' : 'error'">
+                {{ selectedResult.isPassed ? 'PASSED' : 'FAILED' }}
+              </a-tag>
+            </a-descriptions-item>
+            <a-descriptions-item label="Correct Answers">
+              {{ selectedResult.correctAnswers }}/{{ selectedResult.totalQuestions }}
+            </a-descriptions-item>
+            <a-descriptions-item label="Completion Time">
+              {{ selectedResult.completionTime }} minutes
+            </a-descriptions-item>
+            <a-descriptions-item label="Submitted At">
+              {{ dayjs(selectedResult.submittedAt).format('YYYY-MM-DD HH:mm:ss') }}
+            </a-descriptions-item>
+          </a-descriptions>
+
+          <template v-if="selectedResult.answers && selectedResult.answers.length > 0">
+            <a-divider>Question Details</a-divider>
+
+            <div class="question-details">
+              <a-collapse v-model:activeKey="activeQuestionDetails">
+                <a-collapse-panel 
+                  v-for="(answer, index) in selectedResult.answers" 
+                  :key="index"
+                  :header="`Question ${index + 1}`"
+                >
+                  <div class="question-detail-content">
+                    <div class="question-text">{{ answer.question }}</div>
+                    
+                    <div class="options-container">
+                      <div 
+                        class="option" 
+                        :class="{
+                          'correct-option': answer.correctOption === 'A',
+                          'selected-option': answer.selectedOption === 'A',
+                          'wrong-option': answer.selectedOption === 'A' && answer.correctOption !== 'A'
+                        }"
+                      >
+                        <span class="option-label">A:</span> {{ answer.optionA }}
+                      </div>
+                      <div 
+                        class="option" 
+                        :class="{
+                          'correct-option': answer.correctOption === 'B',
+                          'selected-option': answer.selectedOption === 'B',
+                          'wrong-option': answer.selectedOption === 'B' && answer.correctOption !== 'B'
+                        }"
+                      >
+                        <span class="option-label">B:</span> {{ answer.optionB }}
+                      </div>
+                      <div 
+                        class="option" 
+                        :class="{
+                          'correct-option': answer.correctOption === 'C',
+                          'selected-option': answer.selectedOption === 'C',
+                          'wrong-option': answer.selectedOption === 'C' && answer.correctOption !== 'C'
+                        }"
+                      >
+                        <span class="option-label">C:</span> {{ answer.optionC }}
+                      </div>
+                      <div 
+                        class="option" 
+                        :class="{
+                          'correct-option': answer.correctOption === 'D',
+                          'selected-option': answer.selectedOption === 'D',
+                          'wrong-option': answer.selectedOption === 'D' && answer.correctOption !== 'D'
+                        }"
+                      >
+                        <span class="option-label">D:</span> {{ answer.optionD }}
+                      </div>
+                    </div>
+
+                    <div class="answer-status">
+                      <a-tag :color="answer.isCorrect ? 'success' : 'error'">
+                        {{ answer.isCorrect ? 'Correct' : 'Incorrect' }}
+                      </a-tag>
+                      <span class="points">Points: {{ answer.points }}</span>
+                    </div>
+                  </div>
+                </a-collapse-panel>
+              </a-collapse>
+            </div>
+          </template>
+          <template v-else>
+            <a-empty description="No detailed answer information available" />
+          </template>
+        </div>
+      </a-spin>
+    </a-modal>
+
+    <!-- Edit Test Modal -->
+    <a-modal
+      v-model:visible="editTestModalVisible"
+      title="Edit Test"
+      @ok="handleSaveTest"
+      :confirm-loading="submitLoading"
+      width="600px"
+    >
+      <a-form :model="testForm" :rules="testRules" ref="testFormRef" layout="vertical">
+        <a-form-item label="Test Title" name="title">
+          <a-input v-model:value="testForm.title" placeholder="Enter test title"/>
+        </a-form-item>
+
+        <a-form-item label="Description" name="description">
+          <a-textarea v-model:value="testForm.description" placeholder="Enter test description" rows="4"/>
+        </a-form-item>
+
+        <a-form-item label="Passing Score" name="passingScore">
+          <a-input-number v-model:value="testForm.passingScore" :min="1" :max="10" style="width: 100%"/>
+        </a-form-item>
+
+        <a-form-item label="Duration (minutes)" name="durationMinutes">
+          <a-input-number v-model:value="testForm.durationMinutes" :min="1" style="width: 100%"/>
+        </a-form-item>
+
+        <a-form-item label="Published" name="isPublished">
+          <a-switch v-model:checked="testForm.isPublished"/>
+        </a-form-item>
+
+        <a-form-item label="Has Fixed Period" name="hasFixedPeriod">
+          <a-switch v-model:checked="testForm.hasFixedPeriod"/>
+        </a-form-item>
+
+        <template v-if="testForm.hasFixedPeriod">
+          <a-row :gutter="16">
+            <a-col :span="12">
+              <a-form-item label="Start Date & Time" name="scheduledStartTime">
+                <a-date-picker
+                  v-model:value="testForm.scheduledStartTime"
+                  :show-time="{ format: 'HH:mm' }"
+                  format="YYYY-MM-DD HH:mm"
+                  placeholder="Select start time"
+                  style="width: 100%"
+                />
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item label="End Date & Time" name="scheduledEndTime">
+                <a-date-picker
+                  v-model:value="testForm.scheduledEndTime"
+                  :show-time="{ format: 'HH:mm' }"
+                  format="YYYY-MM-DD HH:mm"
+                  placeholder="Select end time"
+                  style="width: 100%"
+                  :disabled-date="disableEndDateBeforeStart"
+                />
+              </a-form-item>
+            </a-col>
+          </a-row>
+        </template>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue';
+import { ref, reactive, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { message, Modal } from 'ant-design-vue';
 import { 
   PlusOutlined, 
   DeleteOutlined, 
   EditOutlined,
-  BulbOutlined
+  BulbOutlined,
+  EyeOutlined
 } from '@ant-design/icons-vue';
 import { useTestStore } from '@/stores/testStore';
 import { useTestQuestionStore } from '@/stores/testQuestionStore';
@@ -337,10 +544,135 @@ const questionRules = {
 const batchModalVisible = ref(false);
 const batchQuestions = ref([]);
 
+const activeTab = ref('questions');
+const testResults = ref([]);
+
+const resultColumns = [
+  {
+    title: 'Intern Name',
+    dataIndex: ['intern', 'fullname'],
+    key: 'internName',
+    align: 'center',
+  },
+  {
+    title: 'Score',
+    dataIndex: 'score',
+    key: 'score',
+    align: 'center',
+    slots: { customRender: 'score' }
+  },
+  {
+    title: 'Status',
+    key: 'status',
+    align: 'center',
+    slots: { customRender: 'status' }
+  },
+  {
+    title: 'Correct Answers',
+    dataIndex: 'correctAnswers',
+    key: 'correctAnswers',
+    align: 'center',
+    customRender: ({ record }) => `${record.correctAnswers}/${record.totalQuestions}`
+  },
+  {
+    title: 'Completion Time',
+    dataIndex: 'completionTime',
+    key: 'completionTime',
+    align: 'center',
+    customRender: ({ text }) => `${text} minutes`
+  },
+  {
+    title: 'Submitted At',
+    dataIndex: 'submittedAt',
+    key: 'submittedAt',
+    align: 'center',
+    slots: { customRender: 'submittedAt' }
+  },
+  {
+    title: 'Action',
+    key: 'action',
+    align: 'center',
+    slots: { customRender: 'action' }
+  }
+];
+
+// Add these new refs
+const detailedResultModalVisible = ref(false);
+const selectedResult = ref(null);
+const activeQuestionDetails = ref([]);
+
+// Add new refs for test editing
+const editTestModalVisible = ref(false);
+const testFormRef = ref(null);
+const testForm = reactive({
+  id: null,
+  title: '',
+  description: '',
+  durationMinutes: 60,
+  passingScore: 7,
+  isPublished: true,
+  hasFixedPeriod: true,
+  scheduledStartTime: null,
+  scheduledEndTime: null
+});
+
+const testRules = {
+  title: [{ required: true, message: 'Please enter the test title', trigger: 'blur' }],
+  durationMinutes: [{ required: true, message: 'Please enter the duration', trigger: 'blur' }],
+  passingScore: [{ required: true, message: 'Please enter the passing score', trigger: 'blur' }],
+  scheduledStartTime: [{ 
+    required: true, 
+    message: 'Please select start date and time',
+    trigger: 'change',
+    validator: (rule, value) => {
+      if (testForm.hasFixedPeriod && !value) {
+        return Promise.reject('Start date and time is required when fixed period is enabled');
+      }
+      return Promise.resolve();
+    }
+  }],
+  scheduledEndTime: [{ 
+    required: true, 
+    message: 'Please select end date and time',
+    trigger: 'change',
+    validator: (rule, value) => {
+      if (testForm.hasFixedPeriod && !value) {
+        return Promise.reject('End date and time is required when fixed period is enabled');
+      }
+      if (testForm.hasFixedPeriod && value && testForm.scheduledStartTime && value.isBefore(testForm.scheduledStartTime)) {
+        return Promise.reject('End time must be after start time');
+      }
+      return Promise.resolve();
+    }
+  }]
+};
+
+// Add computed property to check if test can be edited
+const canEditTest = computed(() => {
+  if (!test.value) return false;
+  
+  // If test has no scheduled start time, it can be edited
+  if (!test.value.scheduledStartTime) return true;
+  
+  // Check if current time is before test start time
+  const now = dayjs();
+  const startTime = dayjs(test.value.scheduledStartTime);
+  return now.isBefore(startTime);
+});
+
+// Add a computed property to check if the test has started
+const hasTestStarted = computed(() => {
+  if (!test.value || !test.value.scheduledStartTime) return false;
+  return dayjs().isAfter(dayjs(test.value.scheduledStartTime));
+});
+
 onMounted(async () => {
   if (testId.value) {
-    await fetchTestDetails();
-    await fetchTestQuestions();
+    await Promise.all([
+      fetchTestDetails(),
+      fetchTestQuestions(),
+      fetchTestResults()
+    ]);
   }
 });
 
@@ -365,6 +697,19 @@ const fetchTestQuestions = async () => {
   } catch (error) {
     console.error('Error fetching test questions:', error);
     message.error('Failed to load test questions');
+  } finally {
+    loading.value = false;
+  }
+};
+
+const fetchTestResults = async () => {
+  try {
+    loading.value = true;
+    const response = await testStore.fetchTestResults(testId.value);
+    testResults.value = response.data || [];
+  } catch (error) {
+    console.error('Error fetching test results:', error);
+    message.error('Failed to load test results');
   } finally {
     loading.value = false;
   }
@@ -511,6 +856,99 @@ const handleBatchSave = async () => {
     submitLoading.value = false;
   }
 };
+
+const showDetailedResult = async (result) => {
+  try {
+    loading.value = true;
+    const response = await testStore.fetchTestResultByIntern(testId.value, result.intern.id);
+    console.log('Detailed result response:', response);
+    
+    // Handle the response data structure
+    if (response && response.data) {
+      selectedResult.value = response.data;
+      detailedResultModalVisible.value = true;
+      
+      // Only set activeQuestionDetails if answers array exists
+      if (selectedResult.value.answers && Array.isArray(selectedResult.value.answers)) {
+        activeQuestionDetails.value = selectedResult.value.answers.map((_, index) => index);
+      } else {
+        activeQuestionDetails.value = [];
+      }
+    } else {
+      message.error('No detailed result data available');
+    }
+  } catch (error) {
+    console.error('Error fetching detailed result:', error);
+    message.error('Failed to load detailed test result');
+  } finally {
+    loading.value = false;
+  }
+};
+
+// Add methods for test editing
+const showEditTestModal = () => {
+  if (!test.value) return;
+  
+  testForm.id = test.value.id;
+  testForm.title = test.value.title;
+  testForm.description = test.value.description || '';
+  testForm.durationMinutes = test.value.durationMinutes;
+  testForm.passingScore = test.value.passingScore;
+  testForm.isPublished = test.value.isPublished;
+  testForm.hasFixedPeriod = test.value.hasFixedPeriod;
+  
+  // Properly handle date/time fields
+  testForm.scheduledStartTime = test.value.scheduledStartTime ? dayjs(test.value.scheduledStartTime) : null;
+  testForm.scheduledEndTime = test.value.scheduledEndTime ? dayjs(test.value.scheduledEndTime) : null;
+  
+  editTestModalVisible.value = true;
+};
+
+const handleSaveTest = () => {
+  testFormRef.value.validate().then(async () => {
+    try {
+      submitLoading.value = true;
+      
+      const formattedData = {
+        title: testForm.title,
+        description: testForm.description,
+        durationMinutes: testForm.durationMinutes,
+        passingScore: testForm.passingScore,
+        isPublished: Boolean(testForm.isPublished),
+        hasFixedPeriod: Boolean(testForm.hasFixedPeriod),
+        scheduledStartTime: testForm.scheduledStartTime ? testForm.scheduledStartTime.toISOString() : null,
+        scheduledEndTime: testForm.scheduledEndTime ? testForm.scheduledEndTime.toISOString() : null
+      };
+
+      await testStore.updateTest(test.value.lesson.classEntity.id, testForm.id, formattedData);
+      await fetchTestDetails();
+      editTestModalVisible.value = false;
+      message.success('Test updated successfully');
+    } catch (error) {
+      console.error('Error updating test:', error);
+      message.error('Failed to update test');
+    } finally {
+      submitLoading.value = false;
+    }
+  }).catch(errors => {
+    console.error("Validation errors:", errors);
+    message.error('Please fix the form errors before submitting');
+  });
+};
+
+// Add a watch for hasFixedPeriod to clear date/time fields when disabled
+watch(() => testForm.hasFixedPeriod, (newValue) => {
+  if (!newValue) {
+    testForm.scheduledStartTime = null;
+    testForm.scheduledEndTime = null;
+  }
+});
+
+// Update the disableEndDateBeforeStart function to be more precise
+const disableEndDateBeforeStart = (current) => {
+  if (!testForm.scheduledStartTime) return false;
+  return current && current.isBefore(testForm.scheduledStartTime);
+};
 </script>
 
 <style scoped>
@@ -518,8 +956,12 @@ const handleBatchSave = async () => {
   padding: 16px;
 }
 
+.test-info-card {
+  margin-bottom: 24px;
+}
+
 .question-list-card {
-  margin-top: 16px;
+  margin-top: 24px;
 }
 
 .questions-container {
@@ -585,5 +1027,78 @@ const handleBatchSave = async () => {
 
 .batch-actions {
   margin-top: 16px;
+}
+
+.test-tabs {
+  margin-top: 16px;
+}
+
+.results-card {
+  margin-top: 16px;
+}
+
+.results-container {
+  padding: 16px;
+}
+
+.results-container :deep(.ant-table-thead > tr > th) {
+  background-color: #fafafa;
+  font-weight: 600;
+}
+
+.results-container :deep(.ant-table-tbody > tr:hover > td) {
+  background-color: #f5f5f5;
+}
+
+.results-container :deep(.ant-tag) {
+  min-width: 80px;
+  text-align: center;
+}
+
+.detailed-result {
+  padding: 16px;
+}
+
+.question-detail-content {
+  padding: 16px;
+}
+
+.answer-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.points {
+  font-weight: 500;
+  color: #1890ff;
+}
+
+.selected-option {
+  background-color: #e6f7ff;
+  border: 1px solid #91d5ff;
+}
+
+.wrong-option {
+  background-color: #fff1f0;
+  border: 1px solid #ffa39e;
+}
+
+.correct-option {
+  background-color: #f6ffed;
+  border: 1px solid #b7eb8f;
+}
+
+.option {
+  margin-bottom: 8px;
+  padding: 12px;
+  border-radius: 4px;
+  background-color: #f5f5f5;
+  transition: all 0.3s;
+}
+
+.option:hover {
+  background-color: #f0f0f0;
 }
 </style> 

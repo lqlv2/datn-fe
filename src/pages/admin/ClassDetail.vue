@@ -27,9 +27,6 @@
       <a-card class="info-card" title="Class Information">
         <a-descriptions bordered :column="{ xs: 1, sm: 2, md: 3 }">
           <a-descriptions-item label="Class Name">{{ classDetail.name }}</a-descriptions-item>
-          <a-descriptions-item label="Status">
-            <a-tag :color="getStatusColor(classDetail.status)">{{ classDetail.status }}</a-tag>
-          </a-descriptions-item>
           <a-descriptions-item label="Duration">{{
               formatDateRange(classDetail.startDate, classDetail.endDate)
             }}
@@ -354,10 +351,9 @@
           </a-form-item>
 
           <a-form-item label="Passing Score" name="passingScore">
-            <a-input-number v-model:value="testForm.passingScore" :min="1" :max="100" style="width: 100%"/>
+            <a-input-number v-model:value="testForm.passingScore" :min="1" :max="10" style="width: 100%"/>
           </a-form-item>
 
-          <template v-if="testForm.hasFixedPeriod">
             <a-row :gutter="16">
               <a-col :span="12">
                 <a-form-item label="Start Date & Time" name="scheduledStartTime">
@@ -383,7 +379,6 @@
                 </a-form-item>
               </a-col>
             </a-row>
-          </template>
 
           <a-form-item label="Description" name="description">
             <a-textarea v-model:value="testForm.description" placeholder="Enter test description" rows="4"/>
@@ -476,7 +471,7 @@ const testForm = reactive({
   title: '',
   description: '',
   durationMinutes: 60,
-  passingScore: 70,
+  passingScore: 7,
   isPublished: true,
   hasFixedPeriod: true,
   scheduledStartTime: null,
@@ -546,19 +541,12 @@ const testColumns = [
     align: 'center',
   },
   {
-    title: 'Status',
-    dataIndex: 'isPublished',
-    key: 'isPublished',
-    align: 'center',
-    slots: {customRender: 'status'}
-  },
-  {
     title: 'Scheduled Time',
     key: 'scheduledTime',
     align: 'center',
     customRender: ({record}) => {
       if (record.scheduledStartTime && record.scheduledEndTime) {
-        return `${dayjs(record.scheduledStartTime).format('YYYY-MM-DD HH:mm')} - ${dayjs(record.scheduledEndTime).format('HH:mm')}`;
+        return `${dayjs(record.scheduledStartTime).format('YYYY-MM-DD HH:mm')} to ${dayjs(record.scheduledEndTime).format('YYYY-MM-DD HH:mm')}`;
       }
       return 'Any time';
     }
@@ -568,7 +556,9 @@ const testColumns = [
     dataIndex: 'createdAt',
     key: 'createdAt',
     align: 'center',
-    render: (text) => text ? dayjs(text).format('YYYY-MM-DD HH:mm') : '',
+    customRender: ({record}) => {
+        return `${dayjs(record.createdAt).format('YYYY-MM-DD HH:mm:ss')}`;
+    }
   },
   {
     title: 'Avg. Score',
@@ -913,7 +903,7 @@ const resetTestForm = () => {
   testForm.title = '';
   testForm.description = '';
   testForm.durationMinutes = 60;
-  testForm.passingScore = 70;
+  testForm.passingScore = 7;
   testForm.isPublished = true;
   testForm.hasFixedPeriod = true;
   testForm.scheduledStartTime = null;
@@ -1176,19 +1166,6 @@ const formatDateRange = (startDate, endDate) => {
   return `${startDate} to ${endDate}`;
 };
 
-const getStatusColor = (status) => {
-  switch (status) {
-    case 'ACTIVE':
-      return 'green';
-    case 'PLANNED':
-      return 'blue';
-    case 'COMPLETED':
-      return 'gray';
-    default:
-      return 'default';
-  }
-};
-
 const getTestStatusColor = (status) => {
   if (typeof status === 'boolean') {
     return status ? 'green' : 'orange';
@@ -1286,26 +1263,46 @@ const handleUploadDocument = async () => {
   }
 };
 
-const downloadDocument = async (document) => {
+const downloadDocument = async (doc) => {
   try {
     loading.value = true;
-    console.log("Downloading document:", document);
+    console.log("Downloading document:", doc);
+    console.log("Downloading document:", doc.key);
 
     // Use the document key for download
-    const response = await classStore.downloadClassDocument(classDetail.value.id, document.key);
+    const response = await classStore.downloadClassDocument(classDetail.value.id, doc.key);
     console.log("Download response:", response);
 
-    // Create a URL for the blob and trigger a download
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
+    // Get the filename from the response headers or use the document's filename
+    const contentDisposition = response.headers['content-disposition'];
+    let filename =  doc.title;
+    
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+      if (filenameMatch && filenameMatch[1]) {
+        filename = filenameMatch[1].replace(/['"]/g, '');
+      }
+    }
 
-    // Use the original file name or fall back to the title with extension
-    const downloadName = document.fileName || `${document.title}.${getFileExtension(document)}`;
-    link.setAttribute('download', downloadName);
+    // Create a URL for the blob and trigger a download
+    const blob = new Blob([response.data], { type: response.headers['content-type'] });
+    const url = window.URL.createObjectURL(blob);
+    
+    // Create a temporary link element using Vue's ref
+    const link = document.createElement('a');
+    link.style.display = 'none';
+    link.href = url;
+    link.setAttribute('download', filename);
+    
+    // Append to body, click, and remove
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    
+    // Cleanup
+    setTimeout(() => {
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    }, 100);
 
     message.success('Document download started');
   } catch (error) {
@@ -1387,7 +1384,7 @@ const fetchClassDocuments = async (classId) => {
           ...doc,
           title: doc.title || doc.fileName || 'Untitled Document',
           // Use s3Key as key if available, otherwise use database id
-          key: doc.s3Key || (doc.id ? `document_${doc.id}` : `temp_${Date.now()}`)
+          key: doc.key || (doc.id ? `document_${doc.id}` : `temp_${Date.now()}`)
         };
       });
       console.log("Processed documents:", documents.value);

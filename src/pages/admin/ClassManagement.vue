@@ -23,21 +23,6 @@
 
         <a-col :xs="24" :sm="12" :md="8" :lg="6">
           <div class="filter-item">
-            <a-select 
-              placeholder="Filter by status" 
-              class="filter-select"
-              v-model:value="filters.status" 
-              allow-clear
-            >
-              <a-select-option value="ACTIVE">Active</a-select-option>
-              <a-select-option value="COMPLETED">Completed</a-select-option>
-              <a-select-option value="PLANNED">Planned</a-select-option>
-            </a-select>
-          </div>
-        </a-col>
-
-        <a-col :xs="24" :sm="12" :md="8" :lg="6">
-          <div class="filter-item">
             <a-button type="primary" class="search-button" @click="handleSearch">
               <template #icon><search-outlined /></template>
               Search
@@ -112,18 +97,9 @@
     >
       <a-form :model="classForm" :rules="rules" ref="classFormRef" layout="vertical">
         <a-row :gutter="16">
-          <a-col :span="12">
+          <a-col :span="24">
             <a-form-item label="Class Name" name="name">
               <a-input v-model:value="classForm.name" placeholder="Enter class name" />
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item label="Status" name="status">
-              <a-select v-model:value="classForm.status">
-                <a-select-option value="ACTIVE">Active</a-select-option>
-                <a-select-option value="COMPLETED">Completed</a-select-option>
-                <a-select-option value="PLANNED">Planned</a-select-option>
-              </a-select>
             </a-form-item>
           </a-col>
         </a-row>
@@ -230,7 +206,7 @@ const selectedClass = ref(null);
 const classForm = reactive({
   id: null,
   name: '',
-  status: 'PLANNED',
+  status: 'ACTIVE',
   description: '',
   detailedDescription: '',
   startDate: null,
@@ -243,7 +219,6 @@ const classForm = reactive({
 
 const filters = reactive({
   name: '',
-  status: null,
 });
 
 const columns = [
@@ -251,13 +226,6 @@ const columns = [
     title: 'Class Name',
     dataIndex: 'name',
     key: 'name',
-    align: 'center'
-  },
-  {
-    title: 'Status',
-    dataIndex: 'status',
-    key: 'status',
-    slots: { customRender: 'status' },
     align: 'center'
   },
   {

@@ -89,4 +89,9 @@ export const fetchTestResultByIntern = async (testId, internId) => {
     }
     throw error;
   }
+};
+
+export const fetchDetailedTestResult = async (resultId) => {
+  const response = await axiosInstance.get(`${API_PREFIX}/test-results/${resultId}`);
+  return response.data;
 }; 

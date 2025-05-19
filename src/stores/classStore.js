@@ -317,7 +317,8 @@ export const useClassStore = defineStore('class', {
     async downloadClassDocument(classId, documentKey) {
       try {
         this.loading = true;
-        const response = await classService.downloadClassDocument(documentKey);
+        console.log('==========', documentKey)
+        const response = await classService.downloadClassDocument(classId, documentKey);
         return response;
       } catch (error) {
         this.error = error.message;

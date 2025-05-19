@@ -112,16 +112,18 @@ export const fetchClassDocuments = async (classId) => {
 
 export const deleteClassDocument = async (classId, documentKey) => {
   // Use unified S3 document endpoint with the S3 key
-  const response = await axiosInstance.delete(`${API_PREFIX}/classes/${classId}/documents`, {
-    data: { key: documentKey }
+  const response = await axiosInstance.delete(`${API_PREFIX}/classes/${classId}/documents?documentKey=${documentKey}`, {
   });
   return response.data;
 };
 
-export const downloadClassDocument = async (documentKey) => {
+export const downloadClassDocument = async (classId, documentKey) => {
   // Get a presigned URL for download
-  const downloadUrl = `/api/classes/documents/${documentKey}/download")`;
-  return directDownloadDocument(downloadUrl);
+  console.log('downloadClassDocument called with classId:', documentKey);
+  const response = await axiosInstance.get(`${API_PREFIX}/classes/documents/download?documentKey=${documentKey}`, {
+    responseType: 'blob'
+  });
+  return response;
 };
 
 export const getDocumentPresignedUrl = async (classId, documentKey) => {

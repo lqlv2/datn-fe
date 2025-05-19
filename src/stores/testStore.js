@@ -128,14 +128,28 @@ export const useTestStore = defineStore('test', {
     },
 
     async fetchTestResults(testId) {
+      this.loading = true;
       try {
-        this.loading = true;
-        const response = await testService.fetchTestResults(testId);
-        this.testResults = response.data;
-        return response;
+        const results = await testService.fetchTestResults(testId);
+        this.testResults = results;
+        return results;
       } catch (error) {
         this.error = error.message;
         message.error('Failed to fetch test results');
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async fetchDetailedTestResult(resultId) {
+      this.loading = true;
+      try {
+        const result = await testService.fetchDetailedTestResult(resultId);
+        return result;
+      } catch (error) {
+        this.error = error.message;
+        message.error('Failed to fetch detailed test result');
         throw error;
       } finally {
         this.loading = false;

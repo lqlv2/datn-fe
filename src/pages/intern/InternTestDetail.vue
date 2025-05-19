@@ -447,13 +447,18 @@ const fetchData = async () => {
         console.log('Existing test result found:', testResult.value);
       }
     } catch (error) {
-      // No result found is expected for new tests, not an error condition
-      console.log('No previous test result found - test not taken yet');
-      testResult.value = null;
+      // Handle both 404 and 400 errors as "test not taken yet" cases
+      if (error.response && (error.response.status === 404 || error.response.status === 400)) {
+        console.log('No previous test result found - test not taken yet');
+        testResult.value = null;
+      } else {
+        console.error('Error fetching test result:', error);
+        message.error('Failed to fetch test result');
+      }
     }
   } catch (error) {
     console.error('Error fetching test data:', error);
-    message.error('Failed to load test data. Please try again.');
+    message.error('Failed to load test data');
   } finally {
     loading.value = false;
   }
