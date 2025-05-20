@@ -120,11 +120,6 @@
         <a-form-item label="Description" name="description">
           <a-textarea v-model:value="classForm.description" placeholder="Enter class description" rows="3" />
         </a-form-item>
-
-        <a-form-item label="Detailed Description" name="detailedDescription">
-          <a-textarea v-model:value="classForm.detailedDescription" placeholder="Enter detailed class description (markdown supported)" rows="5" />
-        </a-form-item>
-
         <a-form-item label="Schedule" name="schedule">
           <a-row :gutter="16">
             <a-col :span="12">

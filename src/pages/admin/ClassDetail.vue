@@ -350,35 +350,45 @@
             <a-input v-model:value="testForm.title" placeholder="Enter test title"/>
           </a-form-item>
 
+          <a-form-item label="Duration (minutes)" name="durationMinutes">
+            <a-input-number 
+              v-model:value="testForm.durationMinutes" 
+              :min="1" 
+              :max="180"
+              style="width: 100%"
+              placeholder="Enter test duration in minutes"
+            />
+          </a-form-item>
+
           <a-form-item label="Passing Score" name="passingScore">
             <a-input-number v-model:value="testForm.passingScore" :min="1" :max="10" style="width: 100%"/>
           </a-form-item>
 
-            <a-row :gutter="16">
-              <a-col :span="12">
-                <a-form-item label="Start Date & Time" name="scheduledStartTime">
-                  <a-date-picker
-                      v-model:value="testForm.scheduledStartTime"
-                      :show-time="{ format: 'HH:mm' }"
-                      format="YYYY-MM-DD HH:mm"
-                      placeholder="Select start time"
-                      style="width: 100%"
-                  />
-                </a-form-item>
-              </a-col>
-              <a-col :span="12">
-                <a-form-item label="End Date & Time" name="scheduledEndTime">
-                  <a-date-picker
-                      v-model:value="testForm.scheduledEndTime"
-                      :show-time="{ format: 'HH:mm' }"
-                      format="YYYY-MM-DD HH:mm"
-                      placeholder="Select end time"
-                      style="width: 100%"
-                      :disabled-date="disableEndDateBeforeStart"
-                  />
-                </a-form-item>
-              </a-col>
-            </a-row>
+          <a-row :gutter="16">
+            <a-col :span="12">
+              <a-form-item label="Start Date & Time" name="scheduledStartTime">
+                <a-date-picker
+                    v-model:value="testForm.scheduledStartTime"
+                    :show-time="{ format: 'HH:mm' }"
+                    format="YYYY-MM-DD HH:mm"
+                    placeholder="Select start time"
+                    style="width: 100%"
+                />
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item label="End Date & Time" name="scheduledEndTime">
+                <a-date-picker
+                    v-model:value="testForm.scheduledEndTime"
+                    :show-time="{ format: 'HH:mm' }"
+                    format="YYYY-MM-DD HH:mm"
+                    placeholder="Select end time"
+                    style="width: 100%"
+                    :disabled-date="disableEndDateBeforeStart"
+                />
+              </a-form-item>
+            </a-col>
+          </a-row>
 
           <a-form-item label="Description" name="description">
             <a-textarea v-model:value="testForm.description" placeholder="Enter test description" rows="4"/>
@@ -851,7 +861,7 @@ const handleEditTest = (record) => {
   testForm.id = record.id;
   testForm.title = record.title;
   testForm.description = record.description || '';
-  testForm.durationMinutes = record.durationMinutes;
+  testForm.durationMinutes = record.durationMinutes || 60;
   testForm.passingScore = record.passingScore;
   testForm.isPublished = record.isPublished;
   testForm.hasFixedPeriod = record.hasFixedPeriod;

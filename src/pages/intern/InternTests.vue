@@ -8,6 +8,7 @@
         <a-tag color="blue">{{ testStats.total }} Total Tests</a-tag>
         <a-tag color="green">{{ testStats.passed }} Passed</a-tag>
         <a-tag color="red">{{ testStats.failed }} Failed</a-tag>
+        <a-tag color="purple">{{ testStats.completionRate }}% Completion Rate</a-tag>
       </template>
       <template #extra>
         <a-button type="primary" @click="refreshData">
@@ -53,8 +54,9 @@
                 </template>
                 
                 <div class="test-info">
-                  <p><strong>Class:</strong> {{ getClassNameById(test.classId) }}</p>
-                  <p><strong>Passing Score:</strong> {{ test.passingScore }}%</p>
+                  <p><strong>Class:</strong> {{ getClassNameById(test.lesson.classEntity.id) }}</p>
+                  <p><strong> Questions:</strong> {{ test.questions.length }}</p>
+                  <p><strong>Passing Score:</strong> {{ test.passingScore }}</p>
                   <p v-if="test.scheduledStartTime && test.scheduledEndTime">
                     <strong>Available Period:</strong><br/>
                     {{ formatDate(test.scheduledStartTime) }} - {{ formatDate(test.scheduledEndTime) }}
@@ -130,14 +132,14 @@
                   <div class="test-title">
                     {{ test.title }}
                     <a-tag :color="test.passed ? 'green' : 'red'">
-                      {{ test.score }}% ({{ test.passed ? 'Pass' : 'Fail' }})
+                      {{ test.score }} ({{ test.passed ? 'Pass' : 'Fail' }})
                     </a-tag>
                   </div>
                 </template>
                 
                 <div class="test-info">
                   <p><strong>Class:</strong> {{ getClassNameById(test.classId) }}</p>
-                  <p><strong>Passing Score:</strong> {{ test.passingScore }}%</p>
+                  <p><strong>Passing Score:</strong> {{ test.passingScore }}</p>
                   <p><strong>Taken On:</strong> {{ formatDate(test.submissionDate) }}</p>
                 </div>
                 
@@ -190,20 +192,6 @@ const internClasses = computed(() => internClassStore.internClasses || []);
 
 // Get statistics from the store or fallback to computed stats if not available
 const testStats = computed(() => {
-  const stats = internClassStore.testStatistics;
-  
-  if (stats) {
-    return {
-      total: stats.totalTests || 0,
-      passed: stats.passedTests || 0,
-      failed: stats.failedTests || 0,
-      completed: stats.completedTests || 0,
-      averageScore: stats.averageScore || 0,
-      completionRate: Math.round(stats.completionRate || 0)
-    };
-  }
-  
-  // Fallback to local calculation if API data not available
   const total = internTests.value.length;
   const completed = testResults.value.length;
   const passed = testResults.value.filter(result => {
@@ -227,50 +215,34 @@ const testStats = computed(() => {
 // Filter upcoming tests (no result yet)
 const upcomingTests = computed(() => {
   return internTests.value.filter(test => {
-    return test.isPublished && !testResults.value.some(result => result.testId === test.id);
+    // Check if test is published and has no result
+    const hasResult = testResults.value.some(result => result.testId === test.id && result.id);
+    const isAvailable = isTestAvailable(test);
+    return test.isPublished && !hasResult && isAvailable;
   });
 });
 
 // Filter completed tests (with results)
 const completedTests = computed(() => {
-  if (!testResults.value.length) {
-    console.log('No test results in testResults.value');
-    return [];
-  }
-  
-  return testResults.value.map(result => {
-    console.log('Processing test result:', result);
-    
-    // Find the corresponding test information
+  console.log('=================',testResults.value)
+  return testResults.value
+      .filter(result => result.id)
+      .map(result => {
     const test = internTests.value.find(t => t.id === result.testId);
-    
-    if (test) {
-      console.log('Found matching test for result:', test.title);
-      return {
-        ...test,
-        id: test.id, // Ensure ID is preserved
-        title: test.title,
-        durationMinutes: test.durationMinutes,
-        passingScore: test.passingScore,
-        classId: result.classId || test.classId || (test.lesson && test.lesson.classId),
-        score: result.score,
-        passed: result.score >= test.passingScore,
-        submissionDate: result.submissionDate || result.createdAt
-      };
-    } else {
-      console.log('No matching test found for result with testId:', result.testId);
-      // If we can't find the test, return a default object with the data we have
-      return {
-        id: result.testId,
-        title: result.testName || 'Unknown Test',
-        passingScore: result.passingScore || 70,
-        classId: result.classId,
-        score: result.score,
-        passed: result.score >= (result.passingScore || 70),
-        submissionDate: result.submissionDate || result.createdAt
-      };
-    }
-  }).filter(Boolean); // Remove any null/undefined entries
+    if (!test) return null;
+
+    return {
+      ...test,
+      id: test.id,
+      title: test.title,
+      durationMinutes: test.durationMinutes,
+      passingScore: test.passingScore,
+      classId: result.classId || test?.lesson?.classEntity?.id	 || (test.lesson && test.lesson.classId),
+      score: result.score,
+      passed: result.score >= test.passingScore,
+      submissionDate: result.submittedAt	 || result.createdAt
+    };
+  }).filter(Boolean);
 });
 
 // Apply filters
@@ -321,28 +293,21 @@ const fetchTestsData = async () => {
     await internClassStore.fetchInternTests(currentUserId.value);
     console.log('Intern tests fetched:', internClassStore.internTests);
     
-    // Fetch test statistics
-    await internClassStore.fetchTestStatistics(currentUserId.value);
-    console.log('Test statistics fetched:', internClassStore.testStatistics);
-    
     // Get the classes if not already loaded
     if (!internClasses.value.length) {
       await internClassStore.fetchInternClasses(currentUserId.value);
       console.log('Intern classes fetched:', internClassStore.internClasses);
     }
     
-    // Fetch test results if any
+    // Fetch test results
     const tests = internClassStore.internTests || [];
     testResults.value = [];
-    console.log('Fetching results for', tests.length, 'tests');
     
     // Create an array of promises for all result fetches
     const resultPromises = tests.map(test => 
       internClassStore.fetchTestResultByIntern(test.id, currentUserId.value)
         .then(response => {
           if (response && response.data) {
-            console.log('Test result found for test ID:', test.id, response.data);
-            // Add classId to the result for proper matching
             const resultWithClassId = {
               ...response.data,
               classId: test.classId || (test.lesson && test.lesson.classId),
@@ -353,11 +318,8 @@ const fetchTestsData = async () => {
           return response;
         })
         .catch(error => {
-          // If no result exists, we'll just continue
           if (!error.response || error.response.status !== 404) {
             console.error(`Error fetching result for test ${test.id}:`, error);
-          } else {
-            console.log(`No results found for test ${test.id} (expected for not-taken tests)`);
           }
         })
     );
@@ -366,21 +328,6 @@ const fetchTestsData = async () => {
     await Promise.allSettled(resultPromises);
     
     console.log('Test results fetched. Found', testResults.value.length, 'completed tests');
-    
-    // If we have no completed tests but we're in development/testing mode, generate some mock results
-    if (testResults.value.length === 0 && import.meta.env.DEV) {
-      console.log('No completed tests found, generating mock data for development');
-      generateMockTestResults();
-    }
-    
-    // Debug output for completed tests
-    if (testResults.value.length) {
-      console.log('First completed test result:', testResults.value[0]);
-    } else {
-      console.log('No completed tests found');
-    }
-    
-    console.log('Completed tests computed property:', completedTests.value);
   } catch (error) {
     console.error('Error fetching test data:', error);
     message.error('Failed to load tests');
@@ -484,7 +431,7 @@ const isTestAvailable = (test) => {
   const start = new Date(test.scheduledStartTime);
   const end = new Date(test.scheduledEndTime);
   
-  return now >= start && now <= end;
+  return true;
 };
 
 const isTestScheduledForFuture = (test) => {

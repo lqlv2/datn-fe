@@ -63,11 +63,11 @@
           :row-class-name="(_record, index) => (index % 2 === 0 ? 'table-row-light' : 'table-row-dark')"
           class="custom-table"
       >
-        <template #action="{ record }">
+        <!-- <template #action="{ record }">
           <a-tag v-if="record.internAccountIds && record.internAccountIds.includes(getCurrentUsername())" class="mentor-tag">
             Your mentor
           </a-tag>
-        </template>
+        </template> -->
       </a-table>
     </div>
   </div>
@@ -105,12 +105,6 @@ const columns = [
     title: "Position",
     dataIndex: "position",
     key: "position",
-  },
-  {
-    title: "",
-    key: "action",
-    align: "center",
-    slots: {customRender: 'action'},
   }
 ]
 const {

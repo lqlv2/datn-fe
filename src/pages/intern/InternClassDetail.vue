@@ -19,85 +19,66 @@
     </a-page-header>
     
     <a-spin :spinning="loading">
-      <a-card title="Class Information" class="info-card">
-        <a-descriptions bordered :column="{ xxl: 4, xl: 3, lg: 3, md: 2, sm: 1, xs: 1 }">
-          <a-descriptions-item label="Code">{{ classDetail?.code }}</a-descriptions-item>
-          <a-descriptions-item label="Mentor">{{ classDetail?.mentor?.fullname || 'Not assigned' }}</a-descriptions-item>
-          <a-descriptions-item label="Schedule">{{ formatSchedule(classDetail) }}</a-descriptions-item>
-          <a-descriptions-item label="Description">{{ classDetail?.description || 'No description' }}</a-descriptions-item>
+      <a-card class="info-card" title="Class Information">
+        <a-descriptions bordered :column="{ xs: 1, sm: 2, md: 3 }">
+          <a-descriptions-item label="Class Name">{{ classDetail?.name }}</a-descriptions-item>
+          <a-descriptions-item label="Duration">{{
+              formatDateRange(classDetail?.startDate, classDetail?.endDate)
+            }}
+          </a-descriptions-item>
+          <a-descriptions-item label="Mentor">
+            <span v-if="classDetail?.mentor">{{ classDetail.mentor.fullname }}</span>
+            <span v-else>Not assigned</span>
+          </a-descriptions-item>
+          <a-descriptions-item label="Schedule">
+            <span v-if="classDetail?.scheduleDays && classDetail.scheduleDays.length">
+              {{ classDetail.scheduleDays.join(', ') }} 
+              <span v-if="classDetail.startTime && classDetail.endTime">
+                ({{ classDetail.startTime }} - {{ classDetail.endTime }})
+              </span>
+            </span>
+            <span v-else>No schedule defined</span>
+          </a-descriptions-item>
+          <a-descriptions-item label="Interns">
+            {{ classDetail?.interns?.length || 0 }} interns enrolled
+          </a-descriptions-item>
+          <a-descriptions-item label="Description" :span="3">
+            {{ classDetail?.description || 'No description provided.' }}
+          </a-descriptions-item>
         </a-descriptions>
-        
-        <div v-if="classDetail?.detailedDescription" class="detailed-description">
-          <a-divider>Detailed Description</a-divider>
-          <div v-html="classDetail.detailedDescription"></div>
-        </div>
       </a-card>
-      
+
+      <!-- Detailed Description Card -->
+      <a-card v-if="classDetail?.detailedDescription" class="info-card" title="Detailed Description"
+              style="margin-top: 16px">
+        <div class="detailed-description" v-html="renderedDetailedDescription"></div>
+      </a-card>
+
       <a-tabs class="content-tabs">
         <a-tab-pane key="documents" tab="Documents">
           <a-empty v-if="!classDocuments || classDocuments.length === 0" description="No documents available for this class" />
           
-          <div v-else class="document-list">
-            <a-tabs>
-              <a-tab-pane key="db-documents" tab="Class Documents">
-                <a-table
-                  :dataSource="classDocuments"
-                  :columns="documentColumns"
-                  :pagination="{ pageSize: 10 }"
-                  :row-key="record => record.id"
-                >
-                  <template #bodyCell="{ column, record }">
-                    <template v-if="column.key === 'fileName'">
-                      <a @click="downloadDocument(record)">{{ record.fileName }}</a>
-                    </template>
-                    <template v-if="column.key === 'fileSize'">
-                      {{ formatFileSize(record.fileSize) }}
-                    </template>
-                    <template v-if="column.key === 'type'">
-                      <a-tag color="blue">{{ record.type }}</a-tag>
-                    </template>
-                    <template v-if="column.key === 'action'">
-                      <a-button type="primary" size="small" @click="downloadDocument(record)">
-                        <download-outlined />
-                        Download
-                      </a-button>
-                    </template>
-                  </template>
-                </a-table>
-              </a-tab-pane>
-              
-              <a-tab-pane key="s3-documents" tab="Additional Resources">
-                <a-input-search
-                  placeholder="Filter by prefix"
-                  style="width: 300px; margin-bottom: 16px"
-                  v-model:value="s3Prefix"
-                  @search="fetchS3Documents"
-                  enter-button
-                />
-                
-                <a-table
-                  :dataSource="s3Documents"
-                  :columns="s3DocumentColumns"
-                  :pagination="{ pageSize: 10 }"
-                  :row-key="record => record.s3Key"
-                >
-                  <template #bodyCell="{ column, record }">
-                    <template v-if="column.key === 'fileName'">
-                      <a @click="downloadS3Document(record)">{{ record.fileName }}</a>
-                    </template>
-                    <template v-if="column.key === 'fileSize'">
-                      {{ formatFileSize(record.fileSize) }}
-                    </template>
-                    <template v-if="column.key === 'action'">
-                      <a-button type="primary" size="small" @click="downloadS3Document(record)">
-                        <download-outlined />
-                        Download
-                      </a-button>
-                    </template>
-                  </template>
-                </a-table>
-              </a-tab-pane>
-            </a-tabs>
+          <div v-else class="test-list">
+            <a-table
+              :dataSource="classDocuments"
+              :columns="documentColumns"
+              :pagination="{ pageSize: 10 }"
+              :row-key="record => record.key"
+              bordered
+              class="custom-table"
+            >
+              <template #titles="{ record, text }">
+                <a @click="downloadDocument(record)">{{ text }}</a>
+              </template>
+              <template #action="{ record }">
+                <a-space>
+                  <a-button type="primary" size="small" @click="downloadDocument(record)">
+                    <download-outlined />
+                    Download
+                  </a-button>
+                </a-space>
+              </template>
+            </a-table>
           </div>
         </a-tab-pane>
         
@@ -110,27 +91,19 @@
               :columns="testColumns"
               :pagination="{ pageSize: 10 }"
               :row-key="record => record.id"
+              bordered
+              class="custom-table"
             >
-              <template #bodyCell="{ column, record }">
-                <template v-if="column.key === 'title'">
-                  <router-link :to="`/intern/tests/${record.id}`">{{ record.title }}</router-link>
-                </template>
-                <template v-if="column.key === 'status'">
-                  <a-tag :color="record.isPublished ? 'green' : 'orange'">
-                    {{ record.isPublished ? 'Published' : 'Unpublished' }}
-                  </a-tag>
-                </template>
-                <template v-if="column.key === 'action'">
-                  <a-button 
-                    type="primary" 
-                    size="small" 
-                    @click="goToTest(record.id)"
-                    :disabled="!record.isPublished"
-                  >
-                    <form-outlined />
-                    Take Test
-                  </a-button>
-                </template>
+              <template #action="{ record }">
+                <a-button 
+                  type="primary" 
+                  size="small" 
+                  @click="goToTest(record)"
+                  :disabled=" !isTestAvailable(record)"
+                >
+                  <form-outlined />
+                  Take Test
+                </a-button>
               </template>
             </a-table>
           </div>
@@ -197,32 +170,28 @@ const documentColumns = [
     title: 'Title',
     dataIndex: 'title',
     key: 'title',
+    align: 'center',
+    slots: { customRender: 'titles' }
   },
   {
-    title: 'File Name',
-    dataIndex: 'fileName',
-    key: 'fileName',
-  },
-  {
-    title: 'File Size',
-    dataIndex: 'fileSize',
-    key: 'fileSize',
-  },
-  {
-    title: 'Type',
-    dataIndex: 'type',
-    key: 'type',
+    title: 'Description',
+    dataIndex: 'description',
+    key: 'description',
+    align: 'center',
   },
   {
     title: 'Uploaded At',
     dataIndex: 'createdAt',
     key: 'createdAt',
-    render: (text) => text ? new Date(text).toLocaleString() : '',
+    align: 'center',
+    render: (text) => text ? dayjs(text).format('YYYY-MM-DD HH:mm') : '',
   },
   {
     title: 'Action',
     key: 'action',
-  },
+    align: 'center',
+    slots: { customRender: 'action' }
+  }
 ];
 
 const testColumns = [
@@ -230,29 +199,29 @@ const testColumns = [
     title: 'Title',
     dataIndex: 'title',
     key: 'title',
+    align: 'center',
+    slots: { customRender: 'title' }
   },
   {
     title: 'Duration',
     dataIndex: 'durationMinutes',
     key: 'duration',
+    align: 'center',
     render: (text) => `${text} minutes`,
   },
   {
     title: 'Passing Score',
     dataIndex: 'passingScore',
     key: 'passingScore',
-  },
-  {
-    title: 'Status',
-    dataIndex: 'isPublished',
-    key: 'status',
+    align: 'center',
   },
   {
     title: 'Scheduled Period',
     key: 'scheduledPeriod',
+    align: 'center',
     customRender: ({ record }) => {
       if (record.scheduledStartTime && record.scheduledEndTime) {
-        return `${formatDate(record.scheduledStartTime)} - ${formatDate(record.scheduledEndTime)}`;
+        return `${dayjs(record.scheduledStartTime).format('YYYY-MM-DD HH:mm')} - ${dayjs(record.scheduledEndTime).format('YYYY-MM-DD HH:mm')}`;
       }
       return 'Any time';
     }
@@ -260,7 +229,9 @@ const testColumns = [
   {
     title: 'Action',
     key: 'action',
-  },
+    align: 'center',
+    slots: { customRender: 'action' }
+  }
 ];
 
 const s3DocumentColumns = [
@@ -299,10 +270,9 @@ onMounted(async () => {
   try {
     // Fetch all the necessary data
     await Promise.all([
+        fetchData(),
       fetchClassDetails(),
       fetchInterns(),
-      fetchClassDocuments(),
-      fetchS3Documents(),
       fetchMentor()
     ]);
   } catch (error) {
@@ -323,6 +293,7 @@ const fetchData = async () => {
     classDocuments.value = documentsResponse.data || [];
     
     const testsResponse = await testStore.fetchTestsByClassId(classId.value);
+    console.log('Fetched tests:', testsResponse);
     classTests.value = testsResponse || [];
   } catch (error) {
     console.error('Error fetching class data:', error);
@@ -341,13 +312,14 @@ const goBack = () => {
   router.push('/intern/classes');
 };
 
-const goToTest = (testId) => {
+const goToTest = (record) => {
+  const testId = record.id;
   const test = classTests.value.find(t => t.id === testId);
   if (test && !isTestAvailable(test)) {
-    if (test.scheduledStartTime && new Date() < new Date(test.scheduledStartTime)) {
-      message.warning(`This test is not available yet. It starts at ${formatDate(test.scheduledStartTime)}`);
-    } else if (test.scheduledEndTime && new Date() > new Date(test.scheduledEndTime)) {
-      message.warning(`This test is no longer available. It ended at ${formatDate(test.scheduledEndTime)}`);
+    if (test.scheduledStartTime && dayjs().isBefore(dayjs(test.scheduledStartTime))) {
+      message.warning(`This test is not available yet. It starts at ${dayjs(test.scheduledStartTime).format('YYYY-MM-DD HH:mm')}`);
+    } else if (test.scheduledEndTime && dayjs().isAfter(dayjs(test.scheduledEndTime))) {
+      message.warning(`This test is no longer available. It ended at ${dayjs(test.scheduledEndTime).format('YYYY-MM-DD HH:mm')}`);
     }
     return;
   }
@@ -378,24 +350,50 @@ const getStatusColor = (status) => {
   }
 };
 
-const downloadDocument = async (document) => {
+const downloadDocument = async (doc) => {
   try {
     loading.value = true;
-    const response = await classStore.downloadClassDocument(classId.value, document.id);
+    console.log("Downloading document:", doc);
+
+    // Use the document key for download
+    const response = await classStore.downloadClassDocument(classId.value, doc.key);
+    console.log("Download response:", response);
+
+    // Get the filename from the response headers or use the document's filename
+    const contentDisposition = response.headers['content-disposition'];
+    let filename = doc.title;
     
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+      if (filenameMatch && filenameMatch[1]) {
+        filename = filenameMatch[1].replace(/['"]/g, '');
+      }
+    }
+
     // Create a URL for the blob and trigger a download
-    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const blob = new Blob([response.data], { type: response.headers['content-type'] });
+    const url = window.URL.createObjectURL(blob);
+    
+    // Create a temporary link element
     const link = document.createElement('a');
+    link.style.display = 'none';
     link.href = url;
-    link.setAttribute('download', document.fileName);
+    link.setAttribute('download', filename);
+    
+    // Append to body, click, and remove
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
     
+    // Cleanup
+    setTimeout(() => {
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    }, 100);
+
     message.success('Document download started');
   } catch (error) {
     console.error('Error downloading document:', error);
-    message.error('Failed to download document');
+    message.error('Failed to download document: ' + (error.message || ''));
   } finally {
     loading.value = false;
   }
@@ -430,21 +428,59 @@ const isTestAvailable = (test) => {
     return true; // Test is available anytime
   }
   
-  const now = new Date();
-  const start = new Date(test.scheduledStartTime);
-  const end = new Date(test.scheduledEndTime);
+  const now = dayjs();
+  const start = dayjs(test.scheduledStartTime);
+  const end = dayjs(test.scheduledEndTime);
   
-  return now >= start && now <= end;
+  return now.isAfter(start) && now.isBefore(end);
 };
 
 const fetchS3Documents = async () => {
   try {
-    const response = await classStore.fetchS3ClassDocuments(classId.value, s3Prefix.value);
-    if (response && response.data) {
-      s3Documents.value = response.data;
+    console.log('======class id', classId.value)
+    if (classId.value) {
+      const response = await classStore.fetchClassDocuments(classId.value);
+      if (response && response.data) {
+        console.log('======class documents', response.data)
+        classDocuments.value = response.data;
+      }
     }
   } catch (error) {
     console.error('Error fetching S3 documents:', error);
+  }
+};
+
+const fetchClassDetails = async () => {
+  try {
+    const response = await classStore.fetchClassById(classId.value);
+    classDetail.value = response.data;
+  } catch (error) {
+    console.error('Error fetching class details:', error);
+    message.error('Failed to load class details');
+  }
+};
+
+const fetchInterns = async () => {
+  try {
+    const response = await classStore.fetchClassInterns(classId.value);
+    if (classDetail.value) {
+      classDetail.value.interns = response || [];
+    }
+  } catch (error) {
+    console.error('Error fetching class interns:', error);
+  }
+};
+
+const fetchMentor = async () => {
+  try {
+    // if (classDetail.value && classDetail.value.mentorId) {
+    //   const response = await classStore.fetch(classId.value);
+    //   if (classDetail.value) {
+    //     classDetail.value.mentor = response.data;
+    //   }
+    // }
+  } catch (error) {
+    console.error('Error fetching class mentor:', error);
   }
 };
 
@@ -486,26 +522,83 @@ const downloadS3Document = async (document) => {
     loading.value = false;
   }
 };
+
+const fetchTests = async () => {
+  try {
+    const response = await testStore.fetchTestsByClassId(classId.value);
+    console.log('Fetched tests:', response);
+    classTests.value = response || [];
+  } catch (error) {
+    console.error('Error fetching tests:', error);
+    message.error('Failed to load tests');
+  }
+};
+
+const formatDateRange = (startDate, endDate) => {
+  if (!startDate && !endDate) return 'Not specified';
+  if (startDate && !endDate) return `From ${dayjs(startDate).format('YYYY-MM-DD')}`;
+  if (!startDate && endDate) return `Until ${dayjs(endDate).format('YYYY-MM-DD')}`;
+  return `${dayjs(startDate).format('YYYY-MM-DD')} to ${dayjs(endDate).format('YYYY-MM-DD')}`;
+};
+
+const renderedDetailedDescription = computed(() => {
+  return classDetail.value?.detailedDescription || '';
+});
 </script>
 
 <style scoped>
 .class-detail-container {
-  padding: 20px;
+  padding: 24px;
+  background-color: #f5f7fa;
+  min-height: 100vh;
 }
 
 .info-card {
-  margin-bottom: 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.info-card :deep(.ant-card-head) {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #eaeaea;
+  padding: 16px 20px;
+}
+
+.info-card :deep(.ant-card-head-title) {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.info-card :deep(.ant-card-body) {
+  padding: 20px;
+}
+
+.info-card :deep(.ant-descriptions-item-label) {
+  background-color: #f0f5ff;
+  font-weight: 500;
+  color: #344054;
+  padding: 12px 16px;
+}
+
+.info-card :deep(.ant-descriptions-item-content) {
+  padding: 12px 16px;
 }
 
 .detailed-description {
-  margin-top: 20px;
+  padding: 16px;
+  line-height: 1.6;
+  white-space: pre-wrap;
 }
 
 .content-tabs {
   background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   padding: 16px;
-  border-radius: 4px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .document-list,
@@ -513,4 +606,29 @@ const downloadS3Document = async (document) => {
 .interns-list {
   margin-top: 16px;
 }
+
+.custom-table {
+  background: white;
+  border-radius: 8px;
+}
+
+.custom-table :deep(.ant-table) {
+  border-radius: 8px;
+}
+
+.custom-table :deep(.ant-table-thead > tr > th) {
+  background-color: #f0f5ff;
+  font-weight: 600;
+  padding: 16px;
+  color: #1f2937;
+}
+
+.custom-table :deep(.ant-table-tbody > tr > td) {
+  padding: 16px;
+}
+
+.custom-table :deep(.ant-table-tbody > tr:hover > td) {
+  background-color: #e6f7ff !important;
+}
+
 </style> 

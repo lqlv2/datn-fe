@@ -17,7 +17,7 @@
           <a-button v-else-if="testResult" type="primary" @click="switchToResultView">
             View Result
           </a-button>
-          <a-tag v-if="hasScheduledPeriod && isTestAvailable && !isTestStarted && !isViewingResults" color="green">
+          <a-tag v-if="hasScheduledPeriod && isTestAvailable && !isTestStarted && !isViewingResults && !testResult" color="green">
             Available Now
           </a-tag>
         </a-space>
@@ -31,7 +31,7 @@
         <a-card v-if="!isTestStarted" title="Test Instructions" class="instructions-card">
           <a-descriptions bordered :column="{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }">
             <a-descriptions-item label="Duration">{{ test?.durationMinutes || 0 }} minutes</a-descriptions-item>
-            <a-descriptions-item label="Passing Score">{{ test?.passingScore || 0 }}%</a-descriptions-item>
+            <a-descriptions-item label="Passing Score">{{ test?.passingScore || 0 }}</a-descriptions-item>
             <a-descriptions-item label="Total Questions">{{ testQuestions.length }}</a-descriptions-item>
             <a-descriptions-item label="Test Type">Multiple Choice</a-descriptions-item>
             <a-descriptions-item v-if="hasScheduledPeriod" label="Available Period" :span="2">
@@ -60,23 +60,13 @@
               <li>Each question has 4 possible answers, with only one correct answer.</li>
               <li>You have {{ test?.durationMinutes || 0 }} minutes to complete the test.</li>
               <li>Once you start the test, the timer will begin and cannot be paused.</li>
-              <li>You must achieve {{ test?.passingScore || 0 }}% or higher to pass.</li>
+              <li>You must achieve {{ test?.passingScore || 0 }} or higher to pass.</li>
               <li v-if="hasScheduledPeriod">This test is only available from {{ formatDateTime(test.scheduledStartTime) }} to {{ formatDateTime(test.scheduledEndTime) }}.</li>
               <li>Click "Start Test" when you are ready to begin.</li>
             </ul>
           </div>
           
           <div class="test-actions">
-            <a-button 
-              type="primary" 
-              size="large" 
-              @click="startTest" 
-              :disabled="testQuestions.length === 0 || (hasScheduledPeriod && !isTestAvailable)"
-              :style="isTestAvailable ? { backgroundColor: '#52c41a', borderColor: '#52c41a' } : {}"
-            >
-              <template #icon><play-circle-outlined v-if="isTestAvailable" /></template>
-              {{ isTestAvailable ? 'Start Test Now' : 'Start Test' }}
-            </a-button>
             
             <div v-if="hasScheduledPeriod && timeUntilTestStarts && !isTestAvailable" class="test-countdown">
               <p>Test will be available in:</p>
@@ -91,6 +81,16 @@
                 </div>
               </div>
             </div>
+            <a-button v-else
+                type="primary"
+                size="large"
+                @click="startTest"
+                :disabled="testQuestions.length === 0 || (hasScheduledPeriod && !isTestAvailable) || testResult"
+                :style="isTestAvailable && !testResult ? { backgroundColor: '#52c41a', borderColor: '#52c41a' } : {}"
+            >
+              <template #icon><play-circle-outlined  /></template>
+              {{ testResult ? 'Test Already Taken' : (isTestAvailable ? 'Start Test Now' : 'Start Test') }}
+            </a-button>
           </div>
         </a-card>
         
@@ -193,7 +193,7 @@
         <a-card>
           <a-result
             :status="testResult?.score >= test?.passingScore ? 'success' : 'error'"
-            :title="`Your Score: ${testResult?.score || 0}%`"
+            :title="`Your Score: ${testResult?.score || 0} / 10`"
             :sub-title="testResult?.score >= test?.passingScore ? 'Congratulations! You passed the test.' : 'Sorry, you did not pass the test.'"
           >
             <template #extra>
@@ -205,10 +205,10 @@
             <div class="result-details">
               <a-descriptions bordered>
                 <a-descriptions-item label="Test Title">{{ test?.title }}</a-descriptions-item>
-                <a-descriptions-item label="Passing Score">{{ test?.passingScore }}%</a-descriptions-item>
-                <a-descriptions-item label="Your Score">{{ testResult?.score }}%</a-descriptions-item>
+                <a-descriptions-item label="Passing Score">{{ test?.passingScore }}</a-descriptions-item>
+                <a-descriptions-item label="Your Score">{{ testResult?.score }}</a-descriptions-item>
                 <a-descriptions-item label="Correct Answers">{{ testResult?.correctAnswers || 0 }} / {{ testQuestions.length }}</a-descriptions-item>
-                <a-descriptions-item label="Submission Date">{{ formatDate(testResult?.submissionDate) }}</a-descriptions-item>
+                <a-descriptions-item label="Submission Date">{{ formatDate(testResult?.submittedAt	) }}</a-descriptions-item>
                 <a-descriptions-item label="Status">
                   <a-tag :color="testResult?.score >= test?.passingScore ? 'success' : 'error'">
                     {{ testResult?.score >= test?.passingScore ? 'PASSED' : 'FAILED' }}
@@ -235,19 +235,17 @@
                     }" :key="key" class="review-option">
                       <span :class="[
                         'option-marker',
-                        testResult?.answers?.[question.id] === key ? 'your-answer' : '',
-                        question.correctOption === key ? 'correct-answer' : ''
+                        testResult?.answers?.[index].selectedOption	 === key ?
+                          (question.correctOption === key ? 'your-answer correct-answer' : 'your-answer wrong-answer') : 
+                          (question.correctOption === key ? 'correct-answer' : '')
                       ]">{{ key }}</span>
                       <span>{{ option }}</span>
                     </p>
                   </div>
-                  
+
                   <div class="answer-explanation">
                     <p>
                       <strong>Correct Answer:</strong> {{ question.correctOption }}
-                    </p>
-                    <p v-if="question.explanation">
-                      <strong>Explanation:</strong> {{ question.explanation }}
                     </p>
                   </div>
                 </a-collapse-panel>
@@ -257,7 +255,7 @@
         </a-card>
       </div>
     </a-spin>
-    
+
     <!-- Confirmation Modal for Test Submission -->
     <a-modal
       v-model:visible="submitModalVisible"
@@ -276,7 +274,7 @@
       </p>
       <p>Once submitted, you cannot change your answers.</p>
     </a-modal>
-    
+
     <!-- Test Completion Modal -->
     <a-modal
       v-model:visible="completionModalVisible"
@@ -352,26 +350,26 @@ const isTestAvailable = computed(() => {
   if (!hasScheduledPeriod.value) {
     return true; // If no scheduled time, test is always available
   }
-  
+
   const now = new Date();
   const scheduledStartTime = new Date(test.value.scheduledStartTime);
   const scheduledEndTime = new Date(test.value.scheduledEndTime);
-  
+
   return now >= scheduledStartTime && now <= scheduledEndTime;
 });
 
 const timeUntilTestStarts = computed(() => {
   if (!hasScheduledPeriod.value) return null;
-  
+
   const now = new Date();
   const startTime = new Date(test.value.scheduledStartTime);
-  
+
   if (now >= startTime) return null;
-  
+
   const diffMs = startTime - now;
   const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
   const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-  
+
   return {
     hours: diffHrs,
     minutes: diffMins,
@@ -381,11 +379,11 @@ const timeUntilTestStarts = computed(() => {
 
 const scheduledTimeMessage = computed(() => {
   if (!hasScheduledPeriod.value) return '';
-  
+
   const now = new Date();
   const startTime = new Date(test.value.scheduledStartTime);
   const endTime = new Date(test.value.scheduledEndTime);
-  
+
   if (now < startTime) {
     // Test hasn't started yet
     const time = timeUntilTestStarts.value;
@@ -413,15 +411,15 @@ const fetchData = async () => {
   loading.value = true;
   try {
     console.log('Fetching test data for test ID:', testId.value, 'and user ID:', currentUserId.value);
-    
+
     // Fetch test details
     const testResponse = await internClassStore.fetchTestById(testId.value);
     test.value = testResponse.data;
     console.log('Test data loaded:', test.value);
-    
+
     // Fetch test questions
     const questionsResponse = await testQuestionStore.fetchTestQuestionsByTestId(testId.value);
-    
+
     // Handle both possible response structures
     if (Array.isArray(questionsResponse)) {
       testQuestions.value = questionsResponse;
@@ -435,14 +433,14 @@ const fetchData = async () => {
       console.warn('Questions data not in expected format:', questionsResponse);
       testQuestions.value = [];
     }
-    
+
     console.log('Test questions loaded:', testQuestions.value.length);
-    
+
     // Try to fetch test result (may not exist if test not taken yet)
     try {
       console.log('Checking for existing test result...');
       const resultResponse = await internClassStore.fetchTestResultByIntern(testId.value, currentUserId.value);
-      if (resultResponse && resultResponse.data) {
+      if (resultResponse && resultResponse.data && resultResponse.data.id) {
         testResult.value = resultResponse.data;
         console.log('Existing test result found:', testResult.value);
       }
@@ -468,14 +466,14 @@ const startTest = () => {
   if (testResult.value) {
     Modal.confirm({
       title: 'You have already taken this test',
-      content: 'Do you want to view your results instead?',
+      content: 'You cannot take this test again. Would you like to view your results?',
       okText: 'View Results',
       cancelText: 'Cancel',
       onOk: () => switchToResultView()
     });
     return;
   }
-  
+
   isTestStarted.value = true;
   resetAnswers();
   startTimer();
@@ -538,14 +536,14 @@ const confirmSubmitTest = () => {
 const submitTest = async (timeExpired = false) => {
   submitModalVisible.value = false;
   loading.value = true;
-  
+
   try {
     stopTimer();
-    
+
     if (timeExpired) {
       message.warning('Time expired! Submitting your test automatically.');
     }
-    
+
     // Prepare answers for submission
     const answersPayload = {};
     for (const questionId in answers) {
@@ -553,17 +551,17 @@ const submitTest = async (timeExpired = false) => {
         answersPayload[questionId] = answers[questionId];
       }
     }
-    
+
     console.log('Submitting test with answers:', answersPayload);
-    
+
     if (Object.keys(answersPayload).length === 0) {
       // Add warning for empty answers, but still allow submission
       message.warning('You are submitting without answering any questions.');
     }
-    
+
     // Submit the test
     const response = await internClassStore.submitTest(testId.value, currentUserId.value, answersPayload);
-    
+
     if (response && response.data) {
       testResult.value = response.data;
       console.log('Test submitted successfully, result:', testResult.value);
@@ -576,7 +574,7 @@ const submitTest = async (timeExpired = false) => {
     }
   } catch (error) {
     console.error('Error submitting test:', error);
-    
+
     // Show a detailed error message based on the error type
     if (error.response && error.response.status === 404) {
       message.error('Test not found or no longer available.');
@@ -585,7 +583,7 @@ const submitTest = async (timeExpired = false) => {
     } else {
       message.error('Failed to submit test. Please try again or contact support.');
     }
-    
+
     // Keep the test open so user can try submitting again
     startTimer(); // Resume the timer
   } finally {
@@ -742,6 +740,9 @@ const formatDateTime = (dateString) => {
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 8px;
+  border-radius: 4px;
+  transition: all 0.3s;
 }
 
 .option-marker {
@@ -763,6 +764,11 @@ const formatDateTime = (dateString) => {
 
 .correct-answer {
   background-color: #52c41a;
+  color: #fff;
+}
+
+.wrong-answer {
+  background-color: #ff4d4f;
   color: #fff;
 }
 

@@ -19,7 +19,7 @@
             v-model:value="filters.name"
             placeholder="Search by class name"
             style="width: 250px; margin-right: 16px"
-            @search="applyFilters"
+            @change="applyFilters"
           />
           <a-select
             v-model:value="filters.status"
@@ -169,7 +169,20 @@ const availableFilters = ref({
 const sortOption = ref('name_asc');
 const availableSortOption = ref('name_asc');
 
-// Computed properties for filtered and sorted classes
+// Add pagination state
+const pagination = ref({
+  current: 1,
+  pageSize: 10,
+  total: 0
+});
+
+const availablePagination = ref({
+  current: 1,
+  pageSize: 8,
+  total: 0
+});
+
+// Update computed properties for filtered and sorted classes
 const filteredInternClasses = computed(() => {
   let result = [...internClasses.value];
   
@@ -189,7 +202,7 @@ const filteredInternClasses = computed(() => {
   
   // Apply sorting
   result = sortClasses(result, sortOption.value);
-  
+
   return result;
 });
 
@@ -213,7 +226,14 @@ const filteredAvailableClasses = computed(() => {
   // Apply sorting
   result = sortClasses(result, availableSortOption.value);
   
-  return result;
+  // Update pagination total
+  availablePagination.value.total = result.length;
+  
+  // Apply pagination
+  const start = (availablePagination.value.current - 1) * availablePagination.value.pageSize;
+  const end = start + availablePagination.value.pageSize;
+  
+  return result.slice(start, end);
 });
 
 const currentUserId = computed(() => {
@@ -265,10 +285,10 @@ const refreshData = async () => {
 
 const fetchData = async () => {
   try {
-    console.log('Fetching intern classes data, user ID:', currentUserId.value);
+    console.log('Fetching all classes data, user ID:', currentUserId.value);
     await Promise.all([
-      internClassStore.fetchInternClasses(currentUserId.value),
-      internClassStore.fetchAvailableClasses(currentUserId.value)
+      internClassStore.fetchInternClasses(currentUserId.value, { pageSize: 10000 }), // Load all classes
+      internClassStore.fetchAvailableClasses(currentUserId.value, { pageSize: 10000 }) // Load all classes
     ]);
     console.log('Successfully fetched class data:', {
       internClasses: internClassStore.internClasses.length,
@@ -304,10 +324,68 @@ const getStatusColor = (status) => {
 
 const registerForClass = async (classId) => {
   try {
+    // Get the class to register for
+    const classToRegister = availableClasses.value.find(c => c.id === classId);
+    if (!classToRegister) {
+      message.error('Class not found');
+      return;
+    }
+
+    // Check for schedule overlap with existing classes
+    const hasOverlap = checkScheduleOverlap(classToRegister);
+    if (hasOverlap) {
+      message.error('Cannot register for this class due to schedule overlap with your existing classes');
+      return;
+    }
+
     await internClassStore.registerForClass(currentUserId.value, classId);
   } catch (error) {
     console.error('Error registering for class:', error);
   }
+};
+
+// Add schedule overlap check function
+const checkScheduleOverlap = (newClass) => {
+  if (!newClass.scheduleDays || !newClass.startTime || !newClass.endTime) {
+    return false; // If new class has no schedule, no overlap
+  }
+
+  // Convert time strings to minutes for easier comparison
+  const newClassStartMinutes = timeToMinutes(newClass.startTime);
+  const newClassEndMinutes = timeToMinutes(newClass.endTime);
+
+  // Check overlap with each enrolled class
+  return internClasses.value.some(enrolledClass => {
+    if (!enrolledClass.scheduleDays || !enrolledClass.startTime || !enrolledClass.endTime) {
+      return false; // Skip classes with no schedule
+    }
+
+    // Check if there are any common days
+    const hasCommonDays = enrolledClass.scheduleDays.some(day => 
+      newClass.scheduleDays.includes(day)
+    );
+
+    if (!hasCommonDays) {
+      return false; // No common days means no overlap
+    }
+
+    // Convert enrolled class times to minutes
+    const enrolledStartMinutes = timeToMinutes(enrolledClass.startTime);
+    const enrolledEndMinutes = timeToMinutes(enrolledClass.endTime);
+
+    // Check for time overlap
+    return (
+      (newClassStartMinutes >= enrolledStartMinutes && newClassStartMinutes < enrolledEndMinutes) ||
+      (newClassEndMinutes > enrolledStartMinutes && newClassEndMinutes <= enrolledEndMinutes) ||
+      (newClassStartMinutes <= enrolledStartMinutes && newClassEndMinutes >= enrolledEndMinutes)
+    );
+  });
+};
+
+// Helper function to convert time string to minutes
+const timeToMinutes = (timeStr) => {
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  return hours * 60 + minutes;
 };
 
 const confirmUnregister = (classItem) => {
@@ -327,6 +405,15 @@ const unregisterFromClass = async (classId) => {
   } catch (error) {
     console.error('Error unregistering from class:', error);
   }
+};
+
+// Add pagination change handlers
+const handlePaginationChange = (page) => {
+  pagination.value.current = page;
+};
+
+const handleAvailablePaginationChange = (page) => {
+  availablePagination.value.current = page;
 };
 </script>
 
@@ -404,5 +491,12 @@ const unregisterFromClass = async (classId) => {
 
 :deep(.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn) {
   font-weight: 600;
+}
+
+.pagination-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  padding: 16px;
 }
 </style> 

@@ -23,7 +23,7 @@
       <a-descriptions title="Test Information" bordered>
         <a-descriptions-item label="Title">{{ test?.title }}</a-descriptions-item>
         <a-descriptions-item label="Description">{{ test?.description || 'No description' }}</a-descriptions-item>
-        <a-descriptions-item label="Duration">{{ dayjs(test?.scheduledEndTime).diff(dayjs(test?.scheduledStartTime), 'minutes') }} minutes</a-descriptions-item>
+        <a-descriptions-item label="Duration">{{ test?.durationMinutes, 'minutes' }} minutes</a-descriptions-item>
         <a-descriptions-item label="Passing Score">{{ test?.passingScore }}</a-descriptions-item>
         <a-descriptions-item label="Scheduled Period">
           <template v-if="test?.scheduledStartTime && test?.scheduledEndTime">

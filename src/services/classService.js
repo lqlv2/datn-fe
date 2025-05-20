@@ -105,6 +105,7 @@ export const uploadClassDocument = async (classId, documentData) => {
 };
 
 export const fetchClassDocuments = async (classId) => {
+    console.log('fetchClassDocuments called with classId:', classId);
   // Use unified S3 document endpoint
   const response = await axiosInstance.get(`${API_PREFIX}/classes/${classId}/documents`);
   return response.data;
